@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Waardeladder Tool</title>
+<style>
+:root{
+  --blue:#1E9BF0;--blue-d:#0d7fd4;--blue-l:#EBF6FF;
+  --navy:#12202F;--grey:#667085;--line:#E4ECF3;--chip:#EEF3F8;
+  --ok:#39B36B;--warn:#F0A13A;--bg:#F6FAFD;
+  --gold:#F5A623;--purple:#7C5CFC;
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',system-ui,sans-serif}
+body{background:var(--bg);color:var(--navy);min-height:100vh;padding:40px 16px 100px}
+.wrap{max-width:960px;margin:0 auto}
+
+/* HERO */
+.hero-badge{display:flex;justify-content:center;margin-bottom:14px}
+.hero-badge span{background:#dceefd;color:var(--blue-d);padding:8px 20px;border-radius:99px;font-size:13px;font-weight:700;letter-spacing:.5px}
+h1.main{text-align:center;font-size:clamp(28px,5vw,44px);font-weight:900;letter-spacing:-1.5px;margin-bottom:8px}
+h1.main em{color:var(--blue);font-style:normal}
+.main-sub{text-align:center;color:var(--grey);margin-bottom:40px;font-size:15px;line-height:1.6}
+
+/* PERSONA PICKER */
+.persona-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:10px}
+.persona-card{border:2px solid var(--line);border-radius:16px;padding:22px 18px;cursor:pointer;background:#fff;transition:.18s;text-align:center}
+.persona-card:hover{border-color:var(--blue);transform:translateY(-2px);box-shadow:0 6px 20px rgba(30,155,240,.12)}
+.persona-card.sel{border-color:var(--blue);background:var(--blue-l);box-shadow:0 0 0 4px #d0e8fd}
+.persona-card .icon{font-size:36px;margin-bottom:10px}
+.persona-card h3{font-size:15px;font-weight:800;margin-bottom:4px}
+.persona-card p{font-size:12.5px;color:var(--grey);line-height:1.4}
+.persona-hint{text-align:center;color:var(--grey);font-size:13px;margin:14px 0 28px}
+
+/* WIZARD */
+.steps{display:flex;justify-content:space-between;margin:0 10px 8px}
+.step{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;cursor:pointer}
+.dot{width:36px;height:36px;border-radius:50%;background:#e1e9f0;color:var(--grey);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+.step.active .dot{background:var(--blue);color:#fff;box-shadow:0 0 0 5px #d4ebfd}
+.step.done .dot{background:var(--blue);color:#fff}
+.step small{font-size:11px;color:var(--grey);text-align:center}
+.bar{height:5px;background:#e1e9f0;border-radius:99px;margin:8px 10px 26px;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),#5fb9f5);width:0;transition:.35s}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:32px 36px;box-shadow:0 10px 40px rgba(18,32,47,.05)}
+.card h2{font-size:22px;font-weight:800;margin-bottom:4px}
+.card .s{color:var(--grey);margin-bottom:22px;font-size:14px;line-height:1.5}
+.field{margin-bottom:20px}
+.field label{font-weight:700;font-size:14px;display:block;margin-bottom:6px}
+.field .hint{font-weight:400;color:var(--grey);font-size:12.5px;margin-left:6px}
+input[type=text],input[type=number],textarea,select{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:11px 14px;font-size:14.5px;color:var(--navy);outline:none;background:#fff}
+input:focus,textarea:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px #d9eefc}
+textarea{min-height:68px;resize:vertical}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+.chip{background:var(--chip);color:#44546a;font-size:12.5px;padding:6px 13px;border-radius:99px;cursor:pointer;border:1px solid transparent}
+.chip:hover{border-color:var(--blue);color:var(--blue-d)}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:10px}
+.opt{border:1.5px solid var(--line);border-radius:12px;padding:13px;cursor:pointer;background:#fff}
+.opt b{display:block;font-size:13.5px;margin-bottom:2px}
+.opt span{color:var(--grey);font-size:12px}
+.opt.sel{border-color:var(--blue);background:var(--blue-l)}
+.nav{display:flex;justify-content:space-between;align-items:center;margin-top:22px}
+.btn{border:none;border-radius:99px;padding:12px 24px;font-size:14.5px;font-weight:700;cursor:pointer}
+.btn.prev{background:#fff;border:1.5px solid var(--line);color:var(--navy)}
+.btn.next{background:linear-gradient(90deg,var(--blue),#3aa9f2);color:#fff;box-shadow:0 6px 18px rgba(30,155,240,.3)}
+.btn.gen{background:linear-gradient(90deg,#1E9BF0,#7C5CFC);color:#fff;font-size:16px;padding:14px 32px;box-shadow:0 8px 24px rgba(30,155,240,.4)}
+.mid{color:var(--grey);font-size:13px}
+
+/* GOLDEN LEVEL BADGE */
+.golden-badge{display:inline-flex;align-items:center;gap:6px;background:var(--gold);color:#fff;border-radius:99px;padding:4px 12px;font-size:11px;font-weight:700;letter-spacing:.5px;margin-bottom:12px}
+
+/* DASHBOARD */
+.dash-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+.dash-header h2{font-size:22px;font-weight:800}
+.btn-sm{background:#fff;border:1.5px solid var(--line);color:var(--navy);border-radius:99px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer}
+.ladder{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px;margin-bottom:18px}
+.tier{background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:20px;cursor:pointer;transition:.15s}
+.tier:hover{border-color:var(--blue);transform:translateY(-2px)}
+.tier .tlvl{font-size:10.5px;font-weight:700;letter-spacing:1.5px;color:var(--blue-d);text-transform:uppercase;margin-bottom:4px}
+.tier .tgold{font-size:10px;font-weight:700;color:var(--gold);letter-spacing:.5px;margin-bottom:4px}
+.tier h3{font-size:17px;margin-bottom:3px}
+.tier .tpr{font-size:22px;font-weight:900;color:var(--navy);margin-bottom:6px}
+.tier p{font-size:13px;color:#44546a;line-height:1.4}
+
+/* ECO */
+.eco{background:var(--navy);border-radius:16px;padding:26px 30px;color:#fff;margin-bottom:18px}
+.eco h3{font-size:13px;color:#9fcdf3;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:16px}
+.eco .nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:18px}
+.eco .n b{display:block;font-size:24px;font-weight:900}
+.eco .n span{font-size:11.5px;color:#9bb0c4}
+.sim{background:rgba(255,255,255,.07);border-radius:12px;padding:16px}
+.sim label{font-size:13px;color:#cfe3f5;display:block;margin-bottom:8px}
+.sim input[type=range]{width:100%;margin-bottom:8px}
+.sim .out{font-size:13.5px;color:#eaf4fd;line-height:1.7}
+.sim .out b{color:#5fb9f5}
+
+/* CHECKS */
+.checks{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:20px 24px;margin-bottom:18px}
+.checks h3{font-size:14px;margin-bottom:12px;font-weight:700}
+.ck{display:flex;gap:10px;font-size:13.5px;padding:5px 0;color:#33485e}
+.ck i{font-style:normal;font-weight:800;min-width:16px}
+.ck.ok i{color:var(--ok)}.ck.warn i{color:var(--warn)}
+
+/* DETAIL */
+.det{background:#fff;border:1.5px solid var(--line);border-radius:18px;padding:30px 34px;margin-bottom:18px}
+.det .dlvl{font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--blue-d);text-transform:uppercase;margin-bottom:2px}
+.det .dgold{font-size:11px;font-weight:700;color:var(--gold);margin-bottom:6px}
+.det h2{font-size:22px;margin-bottom:4px}
+.det .belofte{background:var(--blue-l);border-left:5px solid var(--blue);padding:13px 16px;border-radius:0 10px 10px 0;font-size:14.5px;font-style:italic;margin:14px 0 20px;line-height:1.5}
+.det h4{font-size:14px;margin:20px 0 9px;color:var(--blue-d);font-weight:700}
+.stack{width:100%;border-collapse:collapse;font-size:13.5px}
+.stack td{padding:8px 10px;border-top:1px solid var(--line)}
+.stack td:last-child{text-align:right;font-weight:700;white-space:nowrap}
+.stack tr.tot td{border-top:2px solid var(--navy);font-weight:800;font-size:14.5px}
+.det ul{padding-left:18px;margin:6px 0}
+.det li,.det p{font-size:13.5px;color:#33485e;line-height:1.55}
+.mail{border:1.5px solid var(--line);border-radius:10px;padding:12px 15px;margin-bottom:8px;font-size:13px}
+.mail b{display:block;color:var(--navy);font-size:13.5px}
+.mail span{color:var(--grey)}
+.script{background:#f7fafc;border-radius:10px;padding:14px 16px;font-size:13.5px;font-style:italic;color:#33485e;line-height:1.6}
+.pillrow{display:flex;flex-wrap:wrap;gap:7px}
+.pill{background:var(--chip);padding:5px 13px;border-radius:99px;font-size:12.5px;color:#44546a}
+.sun-tip{background:var(--purple);color:#fff;border-radius:10px;padding:10px 14px;font-size:12.5px;margin-top:10px;line-height:1.5}
+.sun-tip strong{display:block;margin-bottom:2px;font-size:11px;letter-spacing:.5px;opacity:.8;text-transform:uppercase}
+
+.hide{display:none}
+@media(max-width:680px){
+  .card,.det{padding:22px 16px}
+  h1.main{font-size:26px}
+  .step small{display:none}
+  .eco{padding:20px 16px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- HERO -->
+<div class="hero-badge"><span>✦ Waardeladder Tool</span></div>
+<h1 class="main">Bouw je <em>waardeladder</em></h1>
+<p class="main-sub">Van gratis instap tot doorlopend partnerschap — een compleet aanbod-systeem<br>op maat van jouw type onderneming.</p>
+
+<!-- CASE ZERO BANNER -->
+<div id="caseZeroBanner" style="background:linear-gradient(135deg,#12202F,#1a3a5c);border-radius:16px;padding:20px 24px;margin-bottom:28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+  <div>
+    <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:#9fcdf3;text-transform:uppercase;margin-bottom:4px">✦ Case Zero — Live Demo</div>
+    <div style="font-size:16px;font-weight:800;color:#fff;margin-bottom:2px">Refreshed OS — Jacco's eigen waardeladder</div>
+    <div style="font-size:13px;color:#9bb0c4">Zie hoe de tool werkt met echte data. Lokale ondernemer, WordPress-markt, €2.997 core.</div>
+  </div>
+  <button onclick="loadCaseZero()" style="background:linear-gradient(90deg,#1E9BF0,#7C5CFC);color:#fff;border:none;border-radius:99px;padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 4px 16px rgba(30,155,240,.4)">
+    ⚡ Bekijk live resultaat →
+  </button>
+</div>
+
+<!-- STAP 0: PERSONA -->
+<div id="personaStep">
+  <div class="persona-grid" id="personaGrid"></div>
+  <p class="persona-hint">Kies het type dat het beste past. De tool stelt daarna de juiste vragen.</p>
+  <div style="text-align:center">
+    <button class="btn next" id="personaNext" onclick="startWizard()" style="display:none">
+      Doorgaan met <span id="personaLabel"></span> →
+    </button>
+  </div>
+</div>
+
+<!-- WIZARD -->
+<div id="wiz" class="hide">
+  <div class="steps" id="steps"></div>
+  <div class="bar"><i id="barfill"></i></div>
+  <div class="card" id="card"></div>
+  <div class="nav">
+    <button class="btn prev" id="prevBtn">← Vorige</button>
+    <span class="mid" id="stepLbl"></span>
+    <button class="btn next" id="nextBtn">Volgende →</button>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dash" class="hide"></div>
+<div id="detail" class="hide"></div>
+
+</div><!-- /wrap -->
+<script>
+/* ═══════════════════════════════════════════════════
+   WIE-STAP — zelfde voor alle persona's (moet vóór PERSONAS staan)
+═══════════════════════════════════════════════════ */
+const STAP_WIE = {
+  t:'Wie',
+  s:'Wie ben jij? Jouw karakter en waarden bepalen de toon van alles wat eruit komt.',
+  f:[
+    {k:'wie_karakter',T:'text',
+     l:'Wie ben jij als vakman/mens?',
+     h:'3 woorden die bij je passen',
+     ph:'Bijv: eerlijk, direct, betrokken',
+     chips:['Eerlijk & direct','Warm & persoonlijk','Analytisch & precies','Creatief & gedreven','Rustig & betrouwbaar','Enthousiast & energiek']},
+    {k:'wie_waarden',T:'text',
+     l:'Wat zijn jouw 3 kernwaarden?',
+     h:'wat je drijft, elke dag opnieuw',
+     ph:'Bijv: eerlijkheid, resultaat, vrijheid',
+     chips:['Eerlijkheid','Kwaliteit','Vrijheid','Verbinding','Groei','Vakmanschap','Vertrouwen','Impact']},
+    {k:'wie_nooit',T:'text',
+     l:'Wat doe je nooit, hoe dan ook?',
+     h:'je scherpste grens — dit maakt je onderscheidend',
+     ph:'Bijv: ik geef nooit een belofte die ik niet kan waarmaken',
+     chips:['Beloftes die ik niet nakom','Klanten aannemen die niet passen','Haastwerk leveren','Verborgen kosten rekenen','Uitbesteden zonder toestemming']},
+    {k:'wie_anders',T:'text',
+     l:'Wat maakt jou anders dan anderen in jouw vak?',
+     ph:'Bijv: ik combineer techniek met strategie — de meeste anderen doen alleen het één of het ander'},
+    {k:'wie_stijl',T:'opt',
+     l:'Hoe omschrijf je jouw communicatiestijl?',
+     o:[['eerlijk','Eerlijk & direct','zegt wat het is, geen omwegen'],
+        ['warm','Warm & persoonlijk','mensen voelen zich gezien'],
+        ['zakelijk','Zakelijk & resultaatgericht','feiten en cijfers tellen'],
+        ['inspirerend','Inspirerend & visionair','mensen zien de mogelijkheden']]}
+  ]
+};
+
+/* ═══════════════════════════════════════════════════
+   PERSONA DEFINITIES
+═══════════════════════════════════════════════════ */
+const PERSONAS = {
+  ondernemer: {
+    label:'Lokale ondernemer / MKB',
+    icon:'🏢',
+    desc:'Installateur, hovenier, aannemer, accountant, marketingbureau',
+    client:'klant', clients:'klanten', lead:'aanvraag', leads:'aanvragen',
+    session:'project', sessions:'projecten', prob:'probleem',
+    unit:'omzet', unitLabel:'Wat levert een nieuwe klant je gemiddeld op? (€/jaar)',
+    capacityLabel:'Max. nieuwe klanten per maand zonder kwaliteitsverlies',
+    steps:[
+      {t:'Visie',s:'Waarvoor bouw je dit? Jouw antwoorden maken de ladder betekenisvol.',f:[
+        {k:'impact_klant',T:'text',l:'Welke echte verandering wil je teweegbrengen?',h:'dieper dan je dienst — in het leven van je klant',ph:'Bijv: dat ondernemers eindelijk rust voelen omdat hun marketing geregeld is',chips:['Minder stress, meer rust','Financiële zekerheid','Meer tijd voor wat telt','Zelfvertrouwen terugkrijgen']},
+        {k:'impact_tijd',T:'text',l:'Hoe ziet jouw ideale week eruit als dit systeem staat?',ph:'Bijv: 3 werkdagen, 2 dagen volledig vrij voor gezin en sport',chips:['3-daagse werkweek','Geen avondwerk meer','Zelf mijn tijd indelen','Meer ruimte voor gezin']},
+        {k:'vrijheidsgetal',T:'num',l:'Wat is jouw vrijheidsgetal? (€/mnd netto)',h:'niet rijk — gewoon financieel vrij. Wat heb je écht nodig?',ph:'5000'},
+        {k:'impact_relaties',T:'text',l:'Wat wil je meer ruimte voor in je leven?',ph:'Bijv: meer aanwezig zijn voor mijn kinderen, eindelijk sporten',chips:['Gezin en kinderen','Gezondheid & sport','Reizen','Creatieve projecten','Persoonlijke groei']},
+        {k:'impact_waarom',T:'text',l:'Waarom doe je dit werk écht? (1 zin, voor jezelf)',h:'dit hoeft niet perfect — eerlijkheid is genoeg',ph:'Bijv: omdat ik wil bewijzen dat je een goed bedrijf kunt bouwen zonder jezelf te verliezen'}
+      ]},
+      STAP_WIE,
+      {t:'Markt',s:'De Starving Crowd Test — wie is je hongerige markt?',f:[
+        {k:'doelgroep',T:'text',l:'Wie is je klant, zo specifiek mogelijk?',ph:'Bijv: hoveniers en klusbedrijven in Harderwijk',chips:['Lokale MKB','Zzp-vakmensen','Webshop-eigenaren','Bouwbedrijven']},
+        {k:'pijn',T:'text',l:'Welk probleem houdt hem \'s nachts wakker?',h:'wat hij voelt, niet wat jij oplost',ph:'Bijv: de telefoon rinkelt niet',chips:['Te weinig aanvragen','Onzichtbaar online','Geen tijd voor marketing']},
+        {k:'pijnkost',T:'num',l:'Wat kost dit hem per maand? (€)',h:'schatting',ph:'3000'},
+        {k:'betaalkracht',T:'opt',l:'Koopkracht',o:[['krap','Consument krap','laag besteedbaar'],['ruim','Consument ruim','comfortabel'],['zzp','ZZP','investeert als ROI klopt'],['mkb','MKB','budget aanwezig']]},
+        {k:'kanaal',T:'text',l:'Waar vind je hem?',ph:'Google, Instagram, netwerk',chips:['Google','Social media','Netwerk','Ads']}
+      ]},
+      {t:'Uitkomst',s:'De Dream Outcome — meetbaar, met een termijn.',f:[
+        {k:'before',T:'text',l:'Mijn klant gaat van …',ph:'Bijv: nauwelijks online zichtbaar'},
+        {k:'after',T:'text',l:'… naar:',ph:'Bijv: 3-5 nieuwe aanvragen per week via zijn site'},
+        {k:'outcome',T:'text',l:'De uitkomst in 1–2 woorden',ph:'meer klanten',chips:['Meer klanten','Volle agenda','Meer omzet','Meer aanvragen']},
+        {k:'dagen',T:'num',l:'Eerste zichtbare resultaat binnen … dagen',h:'eerlijk',ph:'21'},
+        {k:'jaarwaarde',T:'num',l:'Wat is een nieuwe klant je klant waard in jaar 1? (€)',h:'anker voor alle prijzen',ph:'8000'}
+      ]},
+      {t:'Aanbod',s:'Wat lever je, en hoeveel kun je aan?',f:[
+        {k:'dienst',T:'text',l:'Je beste dienst (hoogste marge)',ph:'Complete website + marketing-systeem'},
+        {k:'levering',T:'opt',l:'Hoe lever je hem?',o:[['dfy','Done-for-you','wij doen alles'],['dwy','Done-with-you','samen'],['diy','Doe-het-zelf','product']]},
+        {k:'capaciteit',T:'num',l:'Max. nieuwe klanten per maand',h:'wordt je échte schaarste',ph:'4'},
+        {k:'verpakbaar',T:'text',l:'Wat kun je verpakken zónder jouw uren?',h:'wordt low ticket',ph:'Template-pakket, video-training',chips:['Template-pakket','Mini-cursus','Workshop-opname','Toolkit']}
+      ]},
+      {t:'Bewijs & Garantie',s:'Zekerheid × moed = pricing power.',f:[
+        {k:'caseres',T:'text',l:'Beste resultaat ooit, in cijfers',ph:'38 aanvragen in 90 dagen'},
+        {k:'bewijs',T:'text',l:'Bewijs dat je hebt',ph:'50+ klanten, 5.0 Google, 10 jaar',chips:['5.0 ★ Google','50+ klanten','10+ jaar']},
+        {k:'moed',T:'opt',l:'Wat durf je te garanderen?',o:[['resultaat','Resultaatgarantie','resultaat of geld terug + gratis door'],['tevreden','30 dagen tevredenheid','geld terug'],['aanpassen','Aanpassen tot het klopt','onbeperkte revisie'],['geen','(Nog) niets','drukt je prijs 25%']]}
+      ]},
+      {t:'Controle',s:'',f:[]}
+    ]
+  },
+
+  therapeut: {
+    label:'Therapeut / Coach',
+    icon:'🧠',
+    desc:'Psycholoog, coach, fysiotherapeut, diëtist, maatschappelijk werker',
+    client:'cliënt', clients:'cliënten', lead:'intake', leads:'intakes',
+    session:'sessie', sessions:'sessies', prob:'klacht of vraag',
+    unit:'waarde van een traject', unitLabel:'Wat is een volledig traject waard voor een cliënt? (€)',
+    capacityLabel:'Max. nieuwe cliënten per maand (eerlijk — agenda is eindig)',
+    steps:[
+      {t:'Visie',s:'Waarvoor doe je dit werk? Jouw antwoorden maken de ladder betekenisvol.',f:[
+        {k:'impact_klant',T:'text',l:'Welke echte verandering wil je teweegbrengen?',h:'dieper dan je behandeling — in het leven van je cliënt',ph:'Bijv: dat mensen weer vol energie door het leven gaan en zichzelf niet meer verliezen',chips:['Meer rust en veerkracht','Terug naar wie ze zijn','Pijnvrij leven','Zelfvertrouwen terugkrijgen']},
+        {k:'impact_tijd',T:'text',l:'Hoe ziet jouw ideale week eruit als dit systeem staat?',ph:'Bijv: 3 behandeldagen, vaste uren, geen administratie in de avond',chips:['Vaste behandeluren','Geen avondwerk','Zelf mijn agenda bepalen','Ruimte voor supervisie & groei']},
+        {k:'vrijheidsgetal',T:'num',l:'Wat is jouw vrijheidsgetal? (€/mnd netto)',h:'niet rijk — gewoon financieel vrij. Wat heb je écht nodig?',ph:'4000'},
+        {k:'impact_relaties',T:'text',l:'Wat wil je meer ruimte voor in je leven?',ph:'Bijv: meer aanwezig zijn voor mijn gezin, eindelijk sporten',chips:['Gezin en kinderen','Gezondheid & sport','Rust en herstel','Persoonlijke groei','Intervisie & leren']},
+        {k:'impact_waarom',T:'text',l:'Waarom doe je dit werk écht? (1 zin, voor jezelf)',h:'dit hoeft niet perfect — eerlijkheid is genoeg',ph:'Bijv: omdat ik mensen wil helpen die vastlopen, maar dat wil doen op een manier die mij ook gezond houdt'}
+      ]},
+      STAP_WIE,
+      {t:'Cliënt',s:'Wie help je, en met welke hulpvraag?',f:[
+        {k:'doelgroep',T:'text',l:'Wie is je cliënt, zo specifiek mogelijk?',ph:'Bijv: volwassenen met burn-out klachten, 30-50 jaar',chips:['Burn-out / stress','Angst en depressie','Relatieproblemen','Rouw en verlies','Chronische pijn','Persoonlijke groei']},
+        {k:'pijn',T:'text',l:'Wat is de hulpvraag waarmee ze binnenkomen?',h:'in hun eigen woorden, niet jouw diagnose',ph:'Bijv: ik functioneer niet meer, ik weet niet wie ik ben',chips:['Ik raak opgebrand','Ik voel me leeg','Ik loop vast','Ik heb nergens energie voor']},
+        {k:'pijnkost',T:'num',l:'Wat kost de klacht hen per maand? (€)',h:'ziekteverzuim, gemist werk, relatieproblemen — schatting is goed',ph:'1500'},
+        {k:'betaalkracht',T:'opt',l:'Hoe financieren je cliënten de behandeling?',o:[['krap','Eigen bijdrage krap','beperkt budget, prijs is gevoelig'],['ruim','Eigen bijdrage ruim','comfortabel, resultaat telt'],['verz','Deels vergoed','zorgverzekering dekt mee'],['bedrijf','Via werkgever/EAP','bedrijf betaalt, minder prijsgevoelig']]},
+        {k:'kanaal',T:'text',l:'Hoe vinden cliënten jou?',ph:'Verwijzing huisarts, Google, mond-tot-mond',chips:['Verwijzing (huisarts/specialist)','Google','Mond-tot-mond','Sociale media']}
+      ]},
+      {t:'Transformatie',s:'Wat is de werkelijke verandering die jij teweegbrengt?',f:[
+        {k:'before',T:'text',l:'Mijn cliënt komt binnen met …',ph:'Bijv: uitputting, nergens meer van genieten'},
+        {k:'after',T:'text',l:'… en vertrekt als iemand die:',ph:'Bijv: grenzen stelt, energie heeft, weer kan functioneren'},
+        {k:'outcome',T:'text',l:'De transformatie in 1–2 woorden',ph:'herstel',chips:['Herstel','Rust en balans','Zelfvertrouwen','Nieuwe start','Pijnvrij']},
+        {k:'dagen',T:'num',l:'Eerste zichtbare verlichting binnen … sessies',h:'eerlijk',ph:'3'},
+        {k:'jaarwaarde',T:'num',l:'Wat is volledig herstel de cliënt waard in jaar 1? (€)',h:'werk, relatie, gezondheid — schat eerlijk',ph:'12000'}
+      ]},
+      {t:'Aanbod',s:'Hoe lever je je werk, en hoeveel kun je aan?',f:[
+        {k:'dienst',T:'text',l:'Je meest waardevolle aanbod',ph:'Bijv: individueel traject van 10 sessies'},
+        {k:'sessietarief',T:'num',l:'Tarief per sessie (€)',ph:'95'},
+        {k:'trajectlengte',T:'num',l:'Sessies per standaard traject',ph:'8'},
+        {k:'levering',T:'opt',l:'Hoe werk je?',o:[['dfy','Volledig 1-op-1','individuele sessies'],['groep','Groepsprogramma','small group, schaalbaar'],['hybrid','Hybride','1-op-1 + online materiaal']]},
+        {k:'capaciteit',T:'num',l:'Max. nieuwe cliënten per maand',h:'eerlijk — jij bent eindig',ph:'4'},
+        {k:'verpakbaar',T:'text',l:'Wat kun je digitaal verpakken?',h:'zonder agenda-tijd',ph:'Bijv: zelfhulp-werkboek, oefenvideo\'s, online programma',chips:['Zelfhulp werkboek','Oefenvideo\'s','Online minicursus','Audiomedidaties']}
+      ]},
+      {t:'Bewijs & Garantie',s:'Zekerheid verlaagt de drempel om hulp te zoeken.',f:[
+        {k:'caseres',T:'text',l:'Beste resultaat ooit voor een cliënt (anoniem)',ph:'Bijv: na 6 sessies weer volledig aan het werk'},
+        {k:'bewijs',T:'text',l:'Bewijs dat je hebt',ph:'200+ cliënten, BIG-geregistreerd, 15 jaar',chips:['BIG-geregistreerd','200+ cliënten geholpen','15+ jaar ervaring','Gecertificeerd']},
+        {k:'moed',T:'opt',l:'Wat durf je te beloven?',o:[['resultaat','Resultaatbelofte','aantoonbare vooruitgang of sessies terug'],['tevreden','Tevredenheidsgarantie','na 3 sessies: niet goed gevoel = geld terug'],['aanpassen','Aanpak aanpassen','we blijven zoeken tot het past'],['geen','Geen expliciete belofte','zorg is altijd individueel']]}
+      ]},
+      {t:'Controle',s:'',f:[]}
+    ]
+  },
+
+  zorgpraktijk: {
+    label:'Zorgpraktijk',
+    icon:'🏥',
+    desc:'Fysiotherapeut, huisarts, tandarts, opticiën, verloskundige',
+    client:'patiënt', clients:'patiënten', lead:'behandelverzoek', leads:'behandelverzoeken',
+    session:'behandeling', sessions:'behandelingen', prob:'klacht',
+    unit:'waarde van een behandeltraject', unitLabel:'Wat is een volledig behandeltraject waard? (€)',
+    capacityLabel:'Max. nieuwe patiënten per maand (eerlijk)',
+    steps:[
+      {t:'Visie',s:'Waarvoor doe je dit werk? Jouw antwoorden maken de ladder betekenisvol.',f:[
+        {k:'impact_klant',T:'text',l:'Welke echte verandering wil je teweegbrengen?',h:'dieper dan de behandeling — in het leven van je patiënt',ph:'Bijv: dat mensen pijnvrij bewegen en hun leven weer leven, niet alleen functioneren',chips:['Pijnvrij leven','Terug op het veld','Volledig herstellen','Weer werken en genieten']},
+        {k:'impact_tijd',T:'text',l:'Hoe ziet jouw ideale week eruit als dit systeem staat?',ph:'Bijv: behandeldagen dinsdag t/m donderdag, maandag en vrijdag vrij',chips:['3-daagse behandelweek','Vaste praktijkuren','Geen avondwerk','Ruimte voor bijscholing']},
+        {k:'vrijheidsgetal',T:'num',l:'Wat is jouw vrijheidsgetal? (€/mnd netto)',h:'niet rijk — gewoon financieel vrij. Wat heb je écht nodig?',ph:'4500'},
+        {k:'impact_relaties',T:'text',l:'Wat wil je meer ruimte voor in je leven?',ph:'Bijv: meer aanwezig zijn voor mijn gezin, sporten',chips:['Gezin en kinderen','Sport en bewegen','Reizen','Rust en herstel','Bijscholing & groei']},
+        {k:'impact_waarom',T:'text',l:'Waarom doe je dit werk écht? (1 zin, voor jezelf)',h:'dit hoeft niet perfect — eerlijkheid is genoeg',ph:'Bijv: omdat ik mensen wil zien bewegen en leven, niet alleen behandelen en doorsturen'}
+      ]},
+      STAP_WIE,
+      {t:'Praktijk',s:'Wie behandel je, en met welke klacht?',f:[
+        {k:'doelgroep',T:'text',l:'Wie is je patiënt, zo specifiek mogelijk?',ph:'Bijv: sporters met knieklachten, 25-45 jaar',chips:['Sporters met blessures','Ouderen revalidatie','Werkenden met RSI/nek','Chronische pijnpatiënten','Postoperatief herstel','Zwangere / postpartum']},
+        {k:'pijn',T:'text',l:'Met welke klacht komen ze?',h:'hun woorden, niet jouw diagnose',ph:'Bijv: mijn knie doet al maanden pijn, ik kan niet meer sporten',chips:['Pijn bij bewegen','Al maanden last','Eerder behandeld zonder resultaat','Wil weer kunnen sporten']},
+        {k:'pijnkost',T:'num',l:'Wat kost de klacht hen per maand? (€)',h:'gemist werk, medicijnen, minder kwaliteit van leven',ph:'800'},
+        {k:'betaalkracht',T:'opt',l:'Hoe betalen je patiënten?',o:[['basisverzekering','Basisverzekering','eigen risico loopt, prijsgevoelig'],['aanvullend','Aanvullend verzekerd','hogere vergoeding, minder prijsgevoelig'],['zelfbetaler','Zelfbetaler / privébehandeling','bewuste keuze buiten verzekering'],['bedrijf','Via arbodienst/werkgever','werkgever betaalt']]},
+        {k:'kanaal',T:'text',l:'Hoe vinden patiënten de praktijk?',ph:'Verwijzing huisarts, Google, mond-tot-mond',chips:['Verwijzing huisarts','Google Maps','Mond-tot-mond','Sportvereniging/bedrijf']}
+      ]},
+      {t:'Herstel',s:'Wat is het echte resultaat dat je levert?',f:[
+        {k:'before',T:'text',l:'De patiënt komt binnen terwijl hij …',ph:'Bijv: niet meer kan sporten en pijnstillers slikt'},
+        {k:'after',T:'text',l:'… en vertrekt als iemand die:',ph:'Bijv: pijnvrij beweegt en zijn sport weer doet'},
+        {k:'outcome',T:'text',l:'Het herstel in 1–2 woorden',ph:'pijnvrij',chips:['Pijnvrij','Volledig herstel','Terug op het veld','Vrij bewegen']},
+        {k:'dagen',T:'num',l:'Eerste merkbare verbetering binnen … behandelingen',h:'eerlijk',ph:'3'},
+        {k:'jaarwaarde',T:'num',l:'Wat is volledig herstel de patiënt waard? (€)',h:'terugkeer werk + sport + kwaliteit van leven',ph:'5000'}
+      ]},
+      {t:'Behandeling',s:'Hoe lever je de zorg, en hoeveel kun je aan?',f:[
+        {k:'dienst',T:'text',l:'Je meest waardevolle behandeling/traject',ph:'Bijv: fysiotherapie traject van 6 behandelingen'},
+        {k:'sessietarief',T:'num',l:'Tarief per behandeling (€)',h:'buiten verzekering',ph:'55'},
+        {k:'trajectlengte',T:'num',l:'Behandelingen per standaard traject',ph:'6'},
+        {k:'levering',T:'opt',l:'Hoe lever je?',o:[['dfy','Hands-on 1-op-1','volledig in praktijk'],['hybrid','Behandeling + thuisoefeningen','hybride model'],['groep','Groepsrevalidatie','meerdere patiënten gelijk']]},
+        {k:'capaciteit',T:'num',l:'Max. nieuwe patiënten per maand',h:'eerlijk — je agenda is eindig',ph:'8'},
+        {k:'verpakbaar',T:'text',l:'Wat kun je digitaal aanbieden?',h:'zonder jouw aanwezigheid',ph:'Bijv: thuisoefenprogramma, preventie-cursus, online check-in',chips:['Thuisoefenprogramma','Preventieve workshop','Online leefstijlcheck','Beweegvideo\'s']}
+      ]},
+      {t:'Bewijs & Garantie',s:'Vertrouwen is de instapdrempel bij zorg.',f:[
+        {k:'caseres',T:'text',l:'Beste behandelresultaat (anoniem)',ph:'Bijv: patiënt na 5 behandelingen pijnvrij en terug op het veld'},
+        {k:'bewijs',T:'text',l:'Bewijs en kwalificaties',ph:'BIG-geregistreerd, 500+ patiënten, 12 jaar',chips:['BIG-geregistreerd','500+ patiënten behandeld','Gespecialiseerd in sportrevalidatie','12+ jaar ervaring']},
+        {k:'moed',T:'opt',l:'Wat kun je beloven?',o:[['resultaat','Aantoonbare vooruitgang','meting voor/na of sessies terug'],['tevreden','Tevredenheidsgarantie','na 3 behandelingen niet tevreden = geld terug'],['aanpassen','Behandelplan aanpassen','we blijven zoeken tot het werkt'],['geen','Geen expliciete garantie','zorg is altijd individueel']]}
+      ]},
+      {t:'Controle',s:'',f:[]}
+    ]
+  },
+
+  kennisondernemer: {
+    label:'Kennis­ondernemer',
+    icon:'🎓',
+    desc:'Trainer, spreker, auteur, online cursusmaker, consultant',
+    client:'deelnemer', clients:'deelnemers', lead:'aanmelding', leads:'aanmeldingen',
+    session:'training', sessions:'trainingen', prob:'uitdaging',
+    unit:'waarde van je kennis voor de deelnemer', unitLabel:'Wat is jouw kennis de deelnemer waard in jaar 1? (€)',
+    capacityLabel:'Max. nieuwe 1-op-1 trajecten per maand (groep is onbeperkt)',
+    steps:[
+      {t:'Visie',s:'Waarvoor doe je dit werk? Jouw antwoorden maken de ladder betekenisvol.',f:[
+        {k:'impact_klant',T:'text',l:'Welke echte verandering wil je teweegbrengen?',h:'dieper dan de training — in het leven of werk van je deelnemer',ph:'Bijv: dat mensen hun volle potentieel inzetten en trots zijn op wat ze bouwen',chips:['Meer zelfvertrouwen','Betere resultaten','Leiderschap ontwikkelen','Vrijheid en autonomie']},
+        {k:'impact_tijd',T:'text',l:'Hoe ziet jouw ideale week eruit als dit systeem staat?',ph:'Bijv: 2 live dagen, de rest online en op eigen tempo',chips:['2 live trainingsdagen','Asynchroon werken','Zelf mijn agenda bepalen','Reizen en werken']},
+        {k:'vrijheidsgetal',T:'num',l:'Wat is jouw vrijheidsgetal? (€/mnd netto)',h:'niet rijk — gewoon financieel vrij. Wat heb je écht nodig?',ph:'6000'},
+        {k:'impact_relaties',T:'text',l:'Wat wil je meer ruimte voor in je leven?',ph:'Bijv: meer tijd voor schrijven, reizen en mijn gezin',chips:['Gezin en kinderen','Reizen','Schrijven & creëren','Spreken op podia','Persoonlijke groei']},
+        {k:'impact_waarom',T:'text',l:'Waarom deel je deze kennis écht? (1 zin, voor jezelf)',h:'dit hoeft niet perfect — eerlijkheid is genoeg',ph:'Bijv: omdat ik anderen niet dezelfde fouten wil laten maken als ik, en omdat goede kennis gedeeld moet worden'}
+      ]},
+      STAP_WIE,
+      {t:'Doelgroep',s:'Wie wil jouw kennis, en waarom nu?',f:[
+        {k:'doelgroep',T:'text',l:'Wie is je deelnemer, zo specifiek mogelijk?',ph:'Bijv: HR-managers bij MKB die leiderschap willen ontwikkelen',chips:['Ondernemers die willen schalen','HR en management','ZZP-professionals','Studenten en starters','Teams bij MKB']},
+        {k:'pijn',T:'text',l:'Welke uitdaging willen ze oplossen?',h:'in hun woorden',ph:'Bijv: mijn team werkt niet samen, ik loop vast als leider',chips:['Ik kom niet verder','Ik mis de skills','Ik wil de volgende stap','Mijn team loopt vast']},
+        {k:'pijnkost',T:'num',l:'Wat kost deze uitdaging hen per maand? (€)',h:'gemiste groei, productiviteitsverlies',ph:'2000'},
+        {k:'betaalkracht',T:'opt',l:'Wie betaalt?',o:[['zelf','Zelf betaald','eigen investering',],['bedrijf','Bedrijf betaalt','opleidingsbudget'],['subsidie','Subsidie/STAP','overheidsbudget'],['premium','Premium particulier','hoge eigen bijdrage OK']]},
+        {k:'kanaal',T:'text',l:'Hoe vinden ze jou?',ph:'LinkedIn, Google, verwijzing, spreken',chips:['LinkedIn','Google / SEO','Spreken op events','Podcast / YouTube','Verwijzing']}
+      ]},
+      {t:'Transformatie',s:'Wat leert iemand, en wat kan hij daarna?',f:[
+        {k:'before',T:'text',l:'Mijn deelnemer start terwijl hij …',ph:'Bijv: vastloopt in zijn leiderschapsrol'},
+        {k:'after',T:'text',l:'… en eindigt als iemand die:',ph:'Bijv: zijn team inspireert en resultaten boekt'},
+        {k:'outcome',T:'text',l:'De transformatie in 1–2 woorden',ph:'groeien',chips:['Groeien','Leiderschap','Schaalbaar','Onafhankelijk','Expert']},
+        {k:'dagen',T:'num',l:'Eerste toepasbaar resultaat binnen … dagen',h:'eerlijk',ph:'7'},
+        {k:'jaarwaarde',T:'num',l:'Wat is de kennis de deelnemer waard in jaar 1? (€)',ph:'20000'}
+      ]},
+      {t:'Aanbod',s:'Hoe lever je de kennis, en hoe schaalbaar is het?',f:[
+        {k:'dienst',T:'text',l:'Je meest waardevolle aanbod',ph:'Bijv: 3-daagse leiderschapstraining + 3 maanden coaching'},
+        {k:'levering',T:'opt',l:'Hoe lever je?',o:[['live','Live training / workshop','fysiek aanwezig'],['online','Online programma','asynchroon, schaalbaar'],['hybrid','Hybride','online + live sessies'],['dfy','1-op-1 consulting','volledig maatwerk']]},
+        {k:'capaciteit',T:'num',l:'Max. 1-op-1 trajecten per maand',h:'groepsprogramma telt niet mee',ph:'3'},
+        {k:'verpakbaar',T:'text',l:'Wat kun je eenmalig opnemen/schrijven en altijd verkopen?',h:'jouw laagste ticket',ph:'Online cursus, e-book, video-reeks, toolkit',chips:['Online videocursus','E-book / werkboek','Template-bibliotheek','Recorded workshop']}
+      ]},
+      {t:'Bewijs & Garantie',s:'Kennis is onzichtbaar — bewijs maakt het tastbaar.',f:[
+        {k:'caseres',T:'text',l:'Sterkste resultaat bij een deelnemer/klant',ph:'Bijv: deelnemer promoveerde binnen 6 maanden na het programma'},
+        {k:'bewijs',T:'text',l:'Jouw bewijs',ph:'500+ deelnemers, 10 jaar, auteur van…',chips:['500+ deelnemers','Gepubliceerd auteur','Spreker op nationale events','10+ jaar ervaring']},
+        {k:'moed',T:'opt',l:'Wat durf je te beloven?',o:[['resultaat','Resultaatgarantie','aantoonbaar resultaat of geld terug'],['tevreden','30 dagen tevredenheid','niet goed gevoel = geld terug'],['aanpassen','Levenslange toegang','altijd bijgewerkte content'],['geen','(Nog) niets','laat resultaten spreken']]}
+      ]},
+      {t:'Controle',s:'',f:[]}
+    ]
+  }
+};
+
+/* ═══════════════════════════════════════════════════
+   MYRON GOLDEN NIVEAUS PER TREDE
+═══════════════════════════════════════════════════ */
+const GOLDEN_LEVELS = {
+  lead:       { lvl:'Niveau 1 — Implementation', color:'#39B36B', tip:'Geautomatiseerd. AI levert dit terwijl jij slaapt.' },
+  tripwire:   { lvl:'Niveau 1→2 — Implementation + Unification', color:'#F0A13A', tip:'Eerste koper-relatie. Bouwt bewijs voor hogere treden.' },
+  low_ticket: { lvl:'Niveau 1 — Verpakte kennis', color:'#1E9BF0', tip:'Eenmalig gebouwd, oneindig verkocht. Geen agenda nodig.' },
+  mid_ticket: { lvl:'Niveau 3 — Communication', color:'#7C5CFC', tip:'Jij communiceert de strategie. AI bereidt voor, jij voert het gesprek.' },
+  core:       { lvl:'Niveau 4 — Imagination', color:'#F5A623', tip:'Jij bedenkt het systeem. Dit is je duurste uur — en je beste marge.' },
+  high_ticket:{ lvl:'Niveau 4 — Imagination (doorlopend)', color:'#6B21A8', tip:'Continuity op het hoogste niveau. Hier wordt LTV gemaakt.' }
+};
+
+/* ═══════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════ */
+let P = null;  // active persona config
+let cur = 0, maxV = 0;
+let A = {};
+let L = null;
+
+/* ═══════════════════════════════════════════════════
+   CASE ZERO — REFRESHED OS
+═══════════════════════════════════════════════════ */
+function loadCaseZero() {
+  P = { key:'ondernemer', ...PERSONAS.ondernemer };
+  A = {
+    wie_karakter: 'Eerlijk, direct, betrokken',
+    wie_waarden: 'Eerlijkheid, vakmanschap, vrijheid',
+    wie_nooit: 'Ik geef nooit een belofte die ik niet kan waarmaken — en ik neem geen klanten aan waarbij ik weet dat het niet past.',
+    wie_anders: 'Ik combineer techniek, strategie en AI in één systeem — de meeste webdesigners doen alleen de site, de meeste marketeers alleen de funnel. Ik doe allebei.',
+    wie_stijl: 'eerlijk',
+    impact_waarom: 'Omdat ik wil bewijzen dat je een winstgevend bedrijf kunt bouwen zonder jezelf te verliezen — en dat systemen dat mogelijk maken.',
+    impact_klant: 'Dat ondernemers eindelijk rust voelen omdat hun marketing geregeld is en klanten vanzelf binnenkomen.',
+    impact_tijd: '3 werkdagen, de rest voor gezin, sporten en bouwen aan het systeem zelf.',
+    vrijheidsgetal: 8000,
+    impact_relaties: 'Meer aanwezig zijn voor mijn gezin en tijd voor sport en persoonlijke groei.',
+    doelgroep: 'Lokale ondernemers met een WordPress-site die te weinig oplevert — installateurs, hoveniers, coaches, therapeuten in de regio',
+    pijn: 'De telefoon rinkelt niet. De site staat er, maar er komt niets uit — terwijl de concurrent wél gevonden wordt',
+    pijnkost: 3000,
+    betaalkracht: 'mkb',
+    kanaal: 'Google, netwerk & verwijzingen, mond-tot-mond',
+    before: 'een WordPress-site die niets oplevert en elke maand geld kost aan plugins en hosting',
+    after: 'een geautomatiseerd systeem dat elke week nieuwe aanvragen genereert — zonder extra uren',
+    outcome: 'meer klanten',
+    dagen: 42,
+    jaarwaarde: 15000,
+    dienst: 'Refreshed OS — complete website + AI-chatbot + leadfunnel + contentstrategie',
+    levering: 'dfy',
+    capaciteit: 4,
+    verpakbaar: 'WinstFunnels template-pakket + video-training + stappenplan',
+    caseres: '37 afspraken in 1 maand (Gezond Vrouw Zijn) en 426 deelnemers in 1 week (Bettuelle)',
+    bewijs: '121+ ondernemers geholpen, 5.0 ★ op Google, 10+ jaar ervaring',
+    moed: 'resultaat'
+  };
+  // Hide banner + persona step, show dash directly
+  document.getElementById('caseZeroBanner').classList.add('hide');
+  document.getElementById('personaStep').classList.add('hide');
+  generate();
+}
+
+/* ═══════════════════════════════════════════════════
+   PERSONA PICKER
+═══════════════════════════════════════════════════ */
+const pg = document.getElementById('personaGrid');
+Object.entries(PERSONAS).forEach(([key, p]) => {
+  const el = document.createElement('div');
+  el.className = 'persona-card';
+  el.innerHTML = `<div class="icon">${p.icon}</div><h3>${p.label}</h3><p>${p.desc}</p>`;
+  el.onclick = () => {
+    document.querySelectorAll('.persona-card').forEach(c => c.classList.remove('sel'));
+    el.classList.add('sel');
+    P = { key, ...p };
+    document.getElementById('personaLabel').textContent = p.label;
+    document.getElementById('personaNext').style.display = 'inline-block';
+  };
+  pg.appendChild(el);
+});
+
+function startWizard() {
+  if (!P) return;
+  A = JSON.parse(localStorage.getItem('rfr_offer_'+P.key) || '{}');
+  cur = 0; maxV = 0;
+  document.getElementById('personaStep').classList.add('hide');
+  document.getElementById('wiz').classList.remove('hide');
+  buildStepDots();
+  render();
+}
+
+/* ═══════════════════════════════════════════════════
+   WIZARD RENDER
+═══════════════════════════════════════════════════ */
+function buildStepDots() {
+  const el = document.getElementById('steps');
+  el.innerHTML = '';
+  P.steps.forEach((s, i) => {
+    const d = document.createElement('div');
+    d.className = 'step';
+    d.innerHTML = `<div class="dot">${i+1}</div><small>${s.t}</small>`;
+    d.onclick = () => { if (i <= maxV) go(i); };
+    el.appendChild(d);
+  });
+}
+
+function save() { localStorage.setItem('rfr_offer_'+P.key, JSON.stringify(A)); }
+function esc(x) { return String(x==null?'':x).replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+function chipH(arr, k) {
+  if (!arr) return '';
+  return '<div class="chips">'+arr.map(c=>`<span class="chip" onclick="setA('${k}',this.textContent)">${c}</span>`).join('')+'</div>';
+}
+function setA(k,v){A[k]=v;save();render()}
+function setO(k,v,el){A[k]=v;save();el.parentNode.querySelectorAll('.opt').forEach(o=>o.classList.remove('sel'));el.classList.add('sel')}
+
+function render() {
+  const STEPS = P.steps;
+  document.querySelectorAll('.step').forEach((el,i)=>{
+    el.className='step'+(i<cur?' done':i===cur?' active':'');
+    el.querySelector('.dot').textContent=i<cur?'✓':i+1;
+  });
+  document.getElementById('barfill').style.width=(cur/(STEPS.length-1)*100)+'%';
+  document.getElementById('stepLbl').textContent=`Stap ${cur+1} van ${STEPS.length}`;
+  document.getElementById('prevBtn').style.visibility=cur===0?'hidden':'visible';
+  const isLast = cur===STEPS.length-1;
+  const nb = document.getElementById('nextBtn');
+  nb.textContent = isLast ? '⚡ Genereer mijn ladder' : 'Volgende →';
+  nb.className = 'btn '+(isLast?'gen':'next');
+
+  const s = STEPS[cur];
+  const c = document.getElementById('card');
+  if (isLast) {
+    let h=`<h2>Controle</h2><p class="s">Klopt dit? Dan bouwt de engine je waardeladder.</p>`;
+    STEPS.slice(0,-1).forEach(st=>st.f.forEach(f=>{
+      let v=A[f.k];
+      if(f.T==='opt'&&v){const o=f.o?.find(x=>x[0]===v);v=o?o[1]:v}
+      h+=`<p style="font-size:13px;padding:4px 0"><b>${f.l}:</b> ${v?esc(v):'<i style="color:#aab6c3">leeg</i>'}</p>`;
+    }));
+    c.innerHTML=h; return;
+  }
+  c.innerHTML=`<h2>${s.t}</h2><p class="s">${s.s}</p>`+s.f.map(f=>{
+    const hint = f.h?`<span class="hint">— ${f.h}</span>`:'';
+    const v = A[f.k]??'';
+    if(f.T==='text') return `<div class="field"><label>${f.l}${hint}</label><input type="text" value="${esc(v)}" placeholder="${f.ph||''}" oninput="A['${f.k}']=this.value;save()">${chipH(f.chips,f.k)}</div>`;
+    if(f.T==='num')  return `<div class="field"><label>${f.l}${hint}</label><input type="number" value="${esc(v)}" placeholder="${f.ph||''}" oninput="A['${f.k}']=parseFloat(this.value)||0;save()"></div>`;
+    if(f.T==='opt')  return `<div class="field"><label>${f.l}${hint}</label><div class="opts">${f.o.map(o=>`<div class="opt${v===o[0]?' sel':''}" onclick="setO('${f.k}','${o[0]}',this)"><b>${o[1]}</b><span>${o[2]}</span></div>`).join('')}</div></div>`;
+    return '';
+  }).join('');
+}
+
+function go(i){cur=Math.max(0,Math.min(P.steps.length-1,i));maxV=Math.max(maxV,cur);render();scrollTo({top:0,behavior:'smooth'})}
+document.getElementById('prevBtn').onclick=()=>go(cur-1);
+document.getElementById('nextBtn').onclick=()=>{if(cur===P.steps.length-1){generate();return}go(cur+1)};
+
+/* ═══════════════════════════════════════════════════
+   ENGINE — HORMOZI × GOLDEN × SUN
+═══════════════════════════════════════════════════ */
+const eur=n=>'€'+Math.round(n).toLocaleString('nl-NL');
+function cap(s){s=(s||'').trim();return s?s[0].toUpperCase()+s.slice(1):''}
+function capW(s){return(s||'').trim().split(/\s+/).map(w=>w[0].toUpperCase()+w.slice(1)).join('-')}
+function snap(t,arr){return arr.reduce((a,b)=>Math.abs(b-t)<Math.abs(a-t)?b:a)}
+
+function computeJW() {
+  // For zorgpraktijk and therapeut: derive jaarwaarde from sessietarief × trajectlengte × 3 trajekten/jaar if not set
+  let jw = A.jaarwaarde || 0;
+  if (!jw && A.sessietarief && A.trajectlengte) {
+    jw = (parseFloat(A.sessietarief)||0) * (parseFloat(A.trajectlengte)||1) * 3;
+  }
+  return jw || 8000;
+}
+
+function generate() {
+  const kr = A.betaalkracht || 'zzp';
+  const jw = computeJW();
+  const pk = A.pijnkost || 1000;
+  const dg = (P.key==='zorgpraktijk'||P.key==='therapeut') ? (A.dagen||3)*7 : (A.dagen||21);
+  const capm = A.capaciteit || 4;
+  const out = capW(A.outcome || 'beter resultaat');
+  const C = P.client, Cs = P.clients;
+
+  // Prijsmapping per koopkracht — aangepast per persona
+  const isCare = (P.key==='therapeut'||P.key==='zorgpraktijk');
+  const twMap = isCare
+    ? {krap:37,ruim:57,verz:47,bedrijf:97}
+    : {krap:27,ruim:47,zzp:67,mkb:97,subsidie:47,premium:97,zelf:47,bedrijf:97};
+  const loMap = isCare
+    ? {krap:47,ruim:97,verz:67,bedrijf:147}
+    : {krap:97,ruim:147,zzp:197,mkb:297,subsidie:97,premium:197,zelf:97,bedrijf:247};
+  const miMap = isCare
+    ? {krap:197,ruim:297,verz:247,bedrijf:497}
+    : {krap:297,ruim:497,zzp:747,mkb:997,subsidie:297,premium:747,zelf:397,bedrijf:997};
+
+  const tw = twMap[kr] || 57;
+  const lo = loMap[kr] || 97;
+  const mi = miMap[kr] || 397;
+  const bump = tw <= 47 ? 17 : 27;
+  const weeks = isCare ? Math.max(4, Math.round(dg/7)+2) : Math.max(2, Math.round(dg/7)+4);
+
+  let core = snap(Math.min(Math.max(jw*0.15,1497),jw*0.25||9997),[1497,1997,2497,2997,3997,4997,6997,9997]);
+  if (A.moed==='geen') core = snap(core*0.75,[997,1497,1997,2497,2997,3997]);
+  const cont = core<=2497?149:core<=3997?197:core<=4997?297:397;
+  const high = core<=2997?297:core<=4997?397:497;
+
+  // Persona-specifieke garantietekst
+  const garBase = {
+    resultaat: isCare
+      ? `"${cap(A.after||'aantoonbare vooruitgang')} binnen ${weeks} weken — of we gaan door totdat je het ervaart, zonder extra kosten."`
+      : `"${cap(A.after||'resultaat')} — of je krijgt je geld terug én we werken gratis door tot het wél zo is."`,
+    tevreden: isCare
+      ? `"Na 3 ${P.sessions}: niet het gevoel dat je op de goede weg bent? Geld terug, geen vragen."`
+      : `"30 dagen. Niet tevreden? Alles terug, geen vragen."`,
+    aanpassen: isCare
+      ? `"We passen de aanpak aan tot hij werkt. Jij kent jezelf het beste — wij leren van jou."`
+      : `"We passen aan tot het klopt. En lukt het écht niet, dan krijg je je investering terug."`,
+    geen: `(Geen expliciete garantie — de engine heeft je core-prijs daarom 25% verlaagd. Bewijs en verwijzingen zijn je alternatieve vertrouwensbouwer.)`
+  };
+  const gar = garBase[A.moed||'tevreden'];
+
+  // Value stack — persona-adaptief
+  const deliveryLabel = A.levering==='groep'?'groepsprogramma':A.levering==='hybrid'?'hybride traject':'volledig 1-op-1';
+  const stack=[
+    [`KERN: ${cap(A.dienst||`het complete ${P.session}traject`)} — ${deliveryLabel}`, core*2.5],
+    [`BONUS 1 (snelheid): Snelstart — eerste resultaat binnen ${isCare?A.dagen||3+' '+P.sessions:weeks+' weken'}`, core*0.2],
+    [isCare
+      ? `BONUS 2 (moeite): Intakegesprek + persoonlijk plan — wij doen het denkwerk vooraf`
+      : `BONUS 2 (moeite): Wij-doen-alles intake — jij levert 45 min input, wij de rest`, core*0.3],
+    [A.moed==='geen'
+      ? `BONUS 3 (zekerheid): ${A.caseres||'Bewijs-dossier met resultaten'}`
+      : `BONUS 3 (zekerheid): De Garantie (zie hieronder)`, 0],
+    [`BONUS 4 (toegang): Directe lijn — tussen ${P.sessions}s snel antwoord`, core*0.15]
+  ];
+  const stackTot = stack.reduce((a,b)=>a+b[1],0);
+
+  // Trede-namen — persona-adaptief
+  const namen = {
+    lead:      { naam:`De ${out}-${isCare?'Check':'Scan'}`,       alt:[`De Gratis ${isCare?'Klacht':'Pijn'}-Check`,`De Nulmeting`,`De ${out}-Test`] },
+    tripwire:  { naam:isCare?`Het Intake-Consult`:`Het ${dg}-Dagen Startplan`, alt:[`De Quick-Win ${isCare?'Sessie':'Start'}`,`Het Eerste Gesprek`,`De Vliegende Start`] },
+    low_ticket:{ naam:isCare?`Het ${out} Zelfhulp-Programma`:`De ${out} Toolkit`, alt:[`Het Doe-Het-Zelf Pakket`,`De Zelf-Start Kit`,`Het Online Programma`] },
+    mid_ticket:{ naam:isCare?`Het Korttraject`:`De Strategie-Sprint`,             alt:[`De Verkenner`,`Het Proeftraject`,`De Strategie-Sessie`] },
+    core:      { naam:`Het ${out} Systeem`,                                        alt:[`Het Volledig Traject`,`De ${weeks}-Weken Aanpak`,`Het Complete Programma`] },
+    high_ticket:{ naam:`De ${P.label.split('/')[0].trim()} Partner`,               alt:[`Het Premium Partnerschap`,`De Vaste Begeleiding`,`De Doorlopende Samenwerking`] }
+  };
+
+  // Belofte-teksten
+  const beloftes = {
+    lead: `"Zie in 2 minuten wat '${A.pijn||P.prob}' je per maand kost: ±${eur(pk)}. Geen verplichtingen."`,
+    tripwire: isCare
+      ? `"Een eerste gesprek + persoonlijk plan binnen 48 uur. Volledig verrekenbaar als je kiest voor het volledige traject."`
+      : `"Eerste concrete stap binnen 48 uur. Volledig verrekenbaar als je later het complete systeem afneemt."`,
+    low_ticket: `"${cap(A.verpakbaar||`Alles om zelf te starten met ${out.toLowerCase()}`)} — zonder onze agenda. Marge ≈ 100%."`,
+    mid_ticket: isCare
+      ? `"Een korttraject om te ervaren hoe we werken — en om het eerste resultaat te zien. Verrekenbaar bij het volledige traject."`
+      : `"Done-with-you: samen bouwen we jouw strategie in één sprint. Verrekenbaar bij het complete systeem."`,
+    core: `"Van '${A.before||'de huidige situatie'}' naar '${A.after||'het gewenste resultaat'}' in ${weeks} weken — ${A.moed==='geen'?'onderbouwd met bewijs':'gegarandeerd'}."`,
+    high_ticket: `"Alles doorlopend begeleid. Maximaal ${Math.max(3,capm)} ${Cs} — persoonlijk, zonder uitbesteden."`
+  };
+
+  // Sun-tips per trede
+  const sunTips = {
+    lead:`AI genereert dit rapport automatisch. Eenmalig gebouwd, oneindig geleverd — geen uren per lead.`,
+    tripwire:`Bouw dit als een vast format. AI bereidt het voor, jij voert het gesprek. 45 min per ${C} → schaalbaar.`,
+    low_ticket:`100% geautomatiseerd. Verpak je kennis eenmalig — verkoop oneindig, zonder agenda.`,
+    mid_ticket:`Vast sessieformat = voorspelbare agenda. AI maakt de samenvatting en het vervolgaanbod klaar.`,
+    core:`Build-First: de Offer Engine genereert het eerste concept. Jij verfijnt. ${C} beleeft het als volledig maatwerk.`,
+    high_ticket:`Bereken je vrijheidsgetal: hoeveel ${Cs} heb je nodig om al je vaste lasten te dekken? Waarschijnlijk 5–8. De rest is jouw tijd.`
+  };
+
+  L = {
+    persona: P.key,
+    tiers:[
+      { id:'lead', ...namen.lead, prijs:'Gratis', prijs_num:0,
+        belofte:beloftes.lead, golden:GOLDEN_LEVELS.lead, sunTip:sunTips.lead,
+        items:[`Kwantificeert de ${P.prob} in euro's — de taal die iedereen begrijpt`,`Is een demo van je betaalde aanbod`,`Resultaat deels direct, volledig na e-mail`,`Kwalificatievraag filtert wie serieus is`],
+        mails:[['Dag 0','Volledig resultaat + het grootste lek'],['Dag 2','Waarom lek #1 zo duur is'],['Dag 4',`"${A.caseres||`Hoe een ${C} dit oploste`}"`],['Dag 7',`Tripwire aanbod — ${eur(tw)}`]],
+        door:`E-mailreeks 7 dagen → tripwire (${eur(tw)}).` },
+
+      { id:'tripwire', ...namen.tripwire, prijs:eur(tw), prijs_num:tw,
+        belofte:beloftes.tripwire, golden:GOLDEN_LEVELS.tripwire, sunTip:sunTips.tripwire,
+        items:[`Lost het éérste deelprobleem op — snel en tastbaar`,`Order bump op de checkout (${eur(bump)}): kleinste no-brainer`,`Garantie: niets geleerd = geld terug`,`Volledig verrekenbaar binnen 30 dagen → urgentie`],
+        mails:[['Direct',`Levering + eerste concrete stap`],['Dag 2','Heb je stap 1 gedaan? — activatie + hulp'],['Dag 5',`Brug naar core + verreken-deadline`]],
+        door:`Bij interesse → core-gesprek. Bij nee: low ticket (${eur(lo)}) aanbieden.` },
+
+      { id:'low_ticket', ...namen.low_ticket, prijs:eur(lo), prijs_num:lo,
+        belofte:beloftes.low_ticket, golden:GOLDEN_LEVELS.low_ticket, sunTip:sunTips.low_ticket,
+        items:[`Eenmalig gebouwd — oneindig verkocht zonder agenda`,`Monetariseert de lijst die nog niet klaar is voor core`,`Elke koper is 3× waardevoller dan een lead`,`Bedankpagina bevat upgrade naar mid ticket`],
+        mails:[['Direct','Levering + snelstart-instructie'],['Dag 3','Loop je vast? Doe het met ons — upsell mid ticket']],
+        door:`Bedankpagina + dag-3 mail → mid ticket.` },
+
+      { id:'mid_ticket', ...namen.mid_ticket, prijs:eur(mi), prijs_num:mi,
+        belofte:beloftes.mid_ticket, golden:GOLDEN_LEVELS.mid_ticket, sunTip:sunTips.mid_ticket,
+        items:[`Upsell vanuit low ticket én downsell vanuit core — dubbele rol`,`Verrekenbaar bij core binnen 30 dagen → doorstroom`,isCare?`${C} leert je kennen — lagere drempel naar het volledige traject`:`Elke sessie = marktonderzoek (bezwaren horen)`,`Vast format = voorspelbare agenda-belasting`],
+        mails:[['Na sessie',`Samenvatting + core-aanbod met deadline (7 dagen)`]],
+        door:`Gesprek eindigt altijd met het kern-aanbod. Ja = verrekenen. Nee = low ticket continueren.` },
+
+      { id:'core', ...namen.core, prijs:`${eur(core)} of 3× ${eur(core*1.1/3)}`, prijs_num:core,
+        belofte:beloftes.core, golden:GOLDEN_LEVELS.core, sunTip:sunTips.core,
+        stack, stackTot, gar,
+        items:[`Één pakket, één prijs — geen drie opties, geen keuzestress`,`Echte schaarste: max ${capm} ${Cs} per maand`,`Fast-action bonus i.p.v. korting: beslis binnen 7 dagen → extra module gratis`,`Upsell (${eur(Math.round(core*0.2))}) alléén op het tekenmoment`],
+        script:`"Goed besluit. Eén ding nog: voor ${eur(Math.round(core*0.2))} zetten we er direct [versneller] bij — na vandaag kost dat ${eur(Math.round(core*0.3))}. Zal ik hem erbij zetten?"`,
+        mails:[['Bij twijfel (48u)','Bezwaar benoemen + garantie herhalen'],['Bij nee','Downsell: huurmodel '+eur(Math.round(core/12*1.15))+'/mnd, 12 mnd']],
+        door:`Bij ja: continuity ${eur(cont)}/mnd na afloop. Bij nee: downsell huurmodel.` },
+
+      { id:'high_ticket', ...namen.high_ticket, prijs:`${eur(high)}/mnd · min. 6 mnd`, prijs_num:high,
+        belofte:beloftes.high_ticket, golden:GOLDEN_LEVELS.high_ticket, sunTip:sunTips.high_ticket,
+        items:[`Intake verplicht — exclusiviteit als waarde`,`Anker: ${isCare?`"een vaste begeleider kost €3.500+/mnd"`:`"een medewerker hiervoor kost €3.500/mnd"`}`,`Pas aanbieden ná bewezen resultaat bij core-${Cs}`,`Hier wordt je LTV gemaakt: core + 24 mnd × ${eur(cont)} = ${eur(core+24*cont)}`],
+        mails:[['Na goed kwartaalresultaat',`Uitnodiging voor partner-gesprek`]],
+        door:`Instroom uitsluitend vanuit core-${Cs} met aantoonbaar resultaat.` }
+    ],
+    eco:{ core, cont, tw, jw, capm, ltv:core+24*cont, maxcac:Math.round((core+24*cont)/3) },
+    checks:[
+      [stackTot>=core*3,`Stackwaarde (${eur(stackTot)}) ≥ 3× prijs (${eur(core*3)})`],
+      [!!(A.after&&A.dagen),'Belofte bevat uitkomst + termijn'],
+      [A.moed!=='geen','Garantie met echte consequentie',(A.moed==='geen'?'Geen garantie → prijs 25% lager. Je sterkste hefboom.':'')],
+      [true,`LTV: ${eur(core+24*cont)} | max CAC bij 3:1: ${eur(Math.round((core+24*cont)/3))}`],
+      [true,'Payback ≤ 30 dagen (aanbetaling vooraf)'],
+      [true,'Elke nee heeft een downsell-pad'],
+      [core<=jw*0.3,`Core (${eur(core)}) ≤ 30% van jaarwaarde (${eur(jw)}) — ${C} wínt aan de deal`,(core>jw*0.3?'Prijs hoog t.o.v. jaarwaarde — check de jaarwaarde-invoer.':'')]
+    ]
+  };
+  renderDash();
+}
+
+/* ═══════════════════════════════════════════════════
+   DASHBOARD
+═══════════════════════════════════════════════════ */
+function renderDash(){
+  document.getElementById('wiz').classList.add('hide');
+  document.getElementById('detail').classList.add('hide');
+  const d=document.getElementById('dash'); d.classList.remove('hide');
+  const e=L.eco;
+  const isCaseZero = A.caseres && A.caseres.includes('Gezond Vrouw Zijn');
+  const vg = A.vrijheidsgetal || 0;
+  const coreClientsNeeded = vg ? Math.ceil(vg / e.cont) : null;
+
+  let h=`<div class="dash-header">
+    <div>
+      ${isCaseZero ? '<div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--blue-d);text-transform:uppercase;margin-bottom:4px">✦ Case Zero — Live Demo</div>' : ''}
+      <h2>${P.icon} ${isCaseZero ? 'Refreshed OS — Jacco\'s waardeladder' : 'Jouw waardeladder — '+P.label}</h2>
+    </div>
+    <div>
+      <button class="btn-sm" onclick="backToWizard()">← Aanpassen</button>
+      <button class="btn-sm" onclick="exportJSON()" style="margin-left:8px">↓ JSON</button>
+    </div>
+  </div>`;
+
+  // VISIE + WIE BLOK
+  if (A.impact_waarom || A.impact_klant || A.wie_karakter) {
+    const stijlLabel = {eerlijk:'Eerlijk & direct',warm:'Warm & persoonlijk',zakelijk:'Zakelijk & resultaatgericht',inspirerend:'Inspirerend & visionair'}[A.wie_stijl] || '';
+    h += `<div style="background:linear-gradient(135deg,#12202F,#1a3a5c);border-radius:16px;padding:26px 30px;margin-bottom:18px;color:#fff">
+      ${A.impact_waarom ? `<div style="border-left:4px solid var(--blue);padding-left:16px;margin-bottom:20px">
+        <div style="font-size:11px;font-weight:700;color:#9fcdf3;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px">Waarom</div>
+        <div style="font-size:17px;color:#fff;font-style:italic;line-height:1.55">"${A.impact_waarom}"</div>
+      </div>` : ''}
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:${(A.wie_karakter||A.wie_waarden||A.wie_nooit)?'20px':'0'}">
+        ${A.impact_klant ? `<div><div style="font-size:10px;font-weight:700;color:#9fcdf3;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Impact op klant</div><div style="font-size:13.5px;color:#d4e8f5;line-height:1.5">${A.impact_klant}</div></div>` : ''}
+        ${A.impact_tijd ? `<div><div style="font-size:10px;font-weight:700;color:#9fcdf3;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Jouw ideale week</div><div style="font-size:13.5px;color:#d4e8f5;line-height:1.5">${A.impact_tijd}</div></div>` : ''}
+        ${A.impact_relaties ? `<div><div style="font-size:10px;font-weight:700;color:#9fcdf3;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Ruimte voor</div><div style="font-size:13.5px;color:#d4e8f5;line-height:1.5">${A.impact_relaties}</div></div>` : ''}
+        ${vg ? `<div style="background:rgba(255,255,255,.09);border-radius:10px;padding:12px 14px">
+          <div style="font-size:10px;font-weight:700;color:#9fcdf3;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Vrijheidsgetal</div>
+          <div style="font-size:26px;font-weight:900;color:#fff">${eur(vg)}<span style="font-size:12px;font-weight:400;color:#9fcdf3">/mnd</span></div>
+          ${coreClientsNeeded ? `<div style="font-size:11.5px;color:#9bb0c4;margin-top:3px">= ${coreClientsNeeded} vaste ${P.clients} in continuity</div>` : ''}
+        </div>` : ''}
+      </div>
+      ${(A.wie_karakter||A.wie_waarden||A.wie_nooit||A.wie_anders) ? `
+      <div style="border-top:1px solid rgba(255,255,255,.1);padding-top:18px">
+        <div style="font-size:10px;font-weight:700;color:#9fcdf3;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px">Wie jij bent</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px">
+          ${A.wie_karakter ? `<div><div style="font-size:10px;font-weight:700;color:#9fcdf3;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Karakter</div><div style="font-size:13.5px;color:#d4e8f5">${A.wie_karakter}</div></div>` : ''}
+          ${A.wie_waarden ? `<div><div style="font-size:10px;font-weight:700;color:#9fcdf3;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Kernwaarden</div><div style="font-size:13.5px;color:#d4e8f5">${A.wie_waarden}</div></div>` : ''}
+          ${A.wie_nooit ? `<div><div style="font-size:10px;font-weight:700;color:#9fcdf3;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Wat ik nooit doe</div><div style="font-size:13.5px;color:#d4e8f5">${A.wie_nooit}</div></div>` : ''}
+          ${A.wie_anders ? `<div><div style="font-size:10px;font-weight:700;color:#9fcdf3;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Wat mij onderscheidt</div><div style="font-size:13.5px;color:#d4e8f5">${A.wie_anders}</div></div>` : ''}
+          ${stijlLabel ? `<div><div style="font-size:10px;font-weight:700;color:#9fcdf3;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Stijl</div><div style="font-size:13.5px;color:#d4e8f5">${stijlLabel}</div></div>` : ''}
+        </div>
+      </div>` : ''}
+    </div>`;}
+
+  h+=`<div class="ladder">${L.tiers.map((t,i)=>`
+    <div class="tier" onclick="renderDet(${i})">
+      <div class="tlvl">${t.golden.lvl.split('—')[0].trim()}</div>
+      <div class="tgold">✦ ${t.golden.lvl.split('—')[1]?.trim()||''}</div>
+      <h3>${t.naam}</h3>
+      <div class="tpr">${t.prijs}</div>
+      <p>${t.belofte.replace(/"/g,'').substring(0,90)}…</p>
+    </div>`).join('')}</div>`;
+
+  h+=`<div class="eco">
+    <h3>Economics + Simulator</h3>
+    <div class="nums">
+      <div class="n"><b>${eur(e.ltv)}</b><span>LTV (core + 24 mnd)</span></div>
+      <div class="n"><b>${eur(e.maxcac)}</b><span>max. CAC bij 3:1</span></div>
+      <div class="n"><b>Dag 1</b><span>payback (aanbetaling)</span></div>
+      <div class="n"><b>${e.capm}/${P.clients.charAt(0)}nd</b><span>capaciteit = schaarste</span></div>
+    </div>
+    <div class="sim">
+      <label>Simulator: <b id="lw">10</b> ${P.leads} per week</label>
+      <input type="range" min="2" max="50" value="10" oninput="sim(this.value)">
+      <div class="out" id="simout"></div>
+    </div>
+  </div>`;
+
+  h+=`<div class="checks"><h3>Systeem-checks</h3>${L.checks.map(c=>`<div class="ck ${c[0]?'ok':'warn'}"><i>${c[0]?'✓':'!'}</i><span>${c[1]}${c[2]?' — <b>'+c[2]+'</b>':''}</span></div>`).join('')}</div>`;
+  h+=`<p style="text-align:center;color:var(--grey);font-size:13px;margin-top:12px">Klik op een trede voor de volledige offer-sheet.</p>`;
+  d.innerHTML=h; sim(10); scrollTo({top:0,behavior:'smooth'});
+}
+
+function sim(v){
+  const lw=parseInt(v); document.getElementById('lw').textContent=lw;
+  const pm=lw*4.33, twb=pm*0.25, cl=Math.min(twb*0.2,L.eco.capm), cap=twb*0.2>L.eco.capm;
+  const once=cl*L.eco.core+twb*L.eco.tw, mrr=cl*L.eco.cont;
+  document.getElementById('simout').innerHTML=
+    `±${Math.round(pm)} ${P.leads}/mnd → <b>${Math.round(twb)}</b> eerste-stap-kopers → <b>${cl.toFixed(1)}</b> core-${P.clients}/mnd${cap?' <b>(gemaximeerd!)</b>':''}<br>≈ <b>${eur(once)}</b> eenmalig + <b>${eur(mrr)}</b>/mnd MRR (jaar 1: ${eur(mrr*12)}/mnd doorlopend)`;
+}
+
+/* ═══════════════════════════════════════════════════
+   OFFER DETAIL
+═══════════════════════════════════════════════════ */
+function renderDet(i){
+  const t=L.tiers[i];
+  document.getElementById('dash').classList.add('hide');
+  const d=document.getElementById('detail'); d.classList.remove('hide');
+  let h=`<div class="det">
+    <button class="btn prev" onclick="renderDash()" style="margin-bottom:16px">← Ladder</button>
+    <div class="dlvl">Trede ${i+1} — ${t.golden.lvl.split('—')[0].trim()}</div>
+    <div class="dgold">✦ ${t.golden.lvl.split('—')[1]?.trim()||''}</div>
+    <h2>${t.naam}</h2>
+    <div class="belofte">${t.belofte}</div>
+    <div class="sun-tip"><strong>⚡ Leverage-tip</strong>${t.sunTip}</div>`;
+  h+=`<h4>Naamalternatieven</h4><div class="pillrow"><span class="pill">${t.naam} ✓</span>${t.alt.map(a=>`<span class="pill">${a}</span>`).join('')}</div>`;
+  if(t.stack){
+    h+=`<h4>Value stack (totaalwaarde ≥ 3× prijs)</h4>
+    <table class="stack">${t.stack.map(r=>`<tr><td>${r[0]}</td><td>${r[1]?eur(r[1]):'onbetaalbaar'}</td></tr>`).join('')}
+    <tr class="tot"><td>TOTALE WAARDE → PRIJS</td><td>${eur(t.stackTot)} → ${t.prijs}</td></tr></table>
+    <h4>Garantie</h4><div class="script">${t.gar}</div>`;
+  }
+  h+=`<h4>Waarom deze trede werkt</h4><ul>${t.items.map(x=>`<li>${x}</li>`).join('')}</ul>`;
+  if(t.mails?.length){h+=`<h4>E-mail workflow</h4>${t.mails.map(m=>`<div class="mail"><b>${m[0]}</b><span>${m[1]}</span></div>`).join('')}`}
+  if(t.script){h+=`<h4>Sales-script (tekenmoment)</h4><div class="script">${t.script}</div>`}
+  h+=`<h4>Doorstroom</h4><p>${t.door}</p></div>`;
+  d.innerHTML=h; scrollTo({top:0,behavior:'smooth'});
+}
+
+function backToWizard(){
+  document.getElementById('dash').classList.add('hide');
+  document.getElementById('detail').classList.add('hide');
+  if (!document.getElementById('steps').children.length) {
+    document.getElementById('caseZeroBanner').classList.remove('hide');
+    document.getElementById('personaStep').classList.remove('hide');
+  } else {
+    document.getElementById('wiz').classList.remove('hide');
+  }
+}
+
+function exportJSON(){
+  const blob=new Blob([JSON.stringify({persona:P.key,input:A,ladder:L},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`waardeladder-${P.key}.json`;a.click();
+}
+</script>
+</body>
+</html>
