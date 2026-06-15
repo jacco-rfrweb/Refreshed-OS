@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Waardeladder Tool</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
 :root{
   --blue:#1E9BF0;--blue-d:#0d7fd4;--blue-l:#EBF6FF;
@@ -27,7 +28,10 @@ h1.main em{color:var(--blue);font-style:normal}
 .persona-card{border:2px solid var(--line);border-radius:16px;padding:22px 18px;cursor:pointer;background:#fff;transition:.18s;text-align:center}
 .persona-card:hover{border-color:var(--blue);transform:translateY(-2px);box-shadow:0 6px 20px rgba(30,155,240,.12)}
 .persona-card.sel{border-color:var(--blue);background:var(--blue-l);box-shadow:0 0 0 4px #d0e8fd}
-.persona-card .icon{font-size:36px;margin-bottom:10px}
+.persona-card .icon{display:flex;justify-content:center;align-items:center;margin-bottom:12px;height:52px}
+.persona-card .icon svg{transition:.18s}
+.persona-card:hover .icon svg{stroke:var(--blue-d);transform:scale(1.08)}
+.persona-card.sel .icon svg{stroke:var(--blue-d)}
 .persona-card h3{font-size:15px;font-weight:800;margin-bottom:4px}
 .persona-card p{font-size:12.5px;color:var(--grey);line-height:1.4}
 .persona-hint{text-align:center;color:var(--grey);font-size:13px;margin:14px 0 28px}
@@ -64,6 +68,27 @@ textarea{min-height:68px;resize:vertical}
 .btn.next{background:linear-gradient(90deg,var(--blue),#3aa9f2);color:#fff;box-shadow:0 6px 18px rgba(30,155,240,.3)}
 .btn.gen{background:linear-gradient(90deg,#1E9BF0,#7C5CFC);color:#fff;font-size:16px;padding:14px 32px;box-shadow:0 8px 24px rgba(30,155,240,.4)}
 .mid{color:var(--grey);font-size:13px}
+
+/* BRON STAP */
+.bron-grid{display:grid;gap:14px;margin-bottom:18px}
+.bron-row{display:flex;gap:8px}
+.bron-row input{flex:1}
+.bron-row button{white-space:nowrap;border:none;border-radius:10px;padding:10px 16px;background:var(--blue);color:#fff;font-size:13px;font-weight:700;cursor:pointer}
+.bron-row button:hover{background:var(--blue-d)}
+.bron-status{font-size:13px;padding:10px 14px;border-radius:10px;margin-top:8px;display:none}
+.bron-status.ok{background:#edfcf2;color:#1a7a44;display:block}
+.bron-status.err{background:#fff3f3;color:#c0392b;display:block}
+.bron-status.loading{background:var(--blue-l);color:var(--blue-d);display:block}
+.api-key-row{display:flex;gap:8px;align-items:center;margin-top:6px}
+.api-key-row label{font-size:12px;color:var(--grey);white-space:nowrap}
+.api-key-row input{flex:1;font-size:13px}
+.prefilled{border-color:var(--blue)!important;background:#f0f8ff!important}
+.bron-analyze{width:100%;margin-top:14px;padding:13px;font-size:15px;font-weight:700;border:none;border-radius:12px;background:linear-gradient(90deg,#1E9BF0,#7C5CFC);color:#fff;cursor:pointer;box-shadow:0 4px 14px rgba(30,155,240,.3)}
+.bron-analyze:hover{opacity:.9}
+.bron-analyze:disabled{opacity:.5;cursor:not-allowed}
+.bron-chip-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.bron-chip{font-size:12px;padding:4px 10px;background:var(--blue-l);color:var(--blue-d);border-radius:99px;cursor:pointer}
+.bron-chip:hover{background:#c8e4fb}
 
 /* GOLDEN LEVEL BADGE */
 .golden-badge{display:inline-flex;align-items:center;gap:6px;background:var(--gold);color:#fff;border-radius:99px;padding:4px 12px;font-size:11px;font-weight:700;letter-spacing:.5px;margin-bottom:12px}
@@ -139,16 +164,25 @@ textarea{min-height:68px;resize:vertical}
 <h1 class="main">Bouw je <em>waardeladder</em></h1>
 <p class="main-sub">Van gratis instap tot doorlopend partnerschap — een compleet aanbod-systeem<br>op maat van jouw type onderneming.</p>
 
-<!-- CASE ZERO BANNER -->
-<div id="caseZeroBanner" style="background:linear-gradient(135deg,#12202F,#1a3a5c);border-radius:16px;padding:20px 24px;margin-bottom:28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-  <div>
-    <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:#9fcdf3;text-transform:uppercase;margin-bottom:4px">✦ Case Zero — Live Demo</div>
-    <div style="font-size:16px;font-weight:800;color:#fff;margin-bottom:2px">Refreshed OS — Jacco's eigen waardeladder</div>
-    <div style="font-size:13px;color:#9bb0c4">Zie hoe de tool werkt met echte data. Lokale ondernemer, WordPress-markt, €2.997 core.</div>
+<!-- DEMO BANNER -->
+<div id="caseZeroBanner" style="background:linear-gradient(135deg,#12202F,#1a3a5c);border-radius:16px;padding:20px 24px;margin-bottom:28px">
+  <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:#9fcdf3;text-transform:uppercase;margin-bottom:12px">✦ Live demo's — bekijk voorbeeldresultaten</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
+    <div style="background:rgba(255,255,255,.07);border-radius:12px;padding:16px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+      <div>
+        <div style="font-size:14px;font-weight:800;color:#fff;margin-bottom:2px">Refreshed OS</div>
+        <div style="font-size:12px;color:#9bb0c4">Lokale ondernemer · WordPress · €2.997</div>
+      </div>
+      <button onclick="loadCaseZero()" style="background:linear-gradient(90deg,#1E9BF0,#7C5CFC);color:#fff;border:none;border-radius:99px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">⚡ Bekijk →</button>
+    </div>
+    <div style="background:rgba(255,255,255,.07);border-radius:12px;padding:16px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+      <div>
+        <div style="font-size:14px;font-weight:800;color:#fff;margin-bottom:2px">Business Coach</div>
+        <div style="font-size:12px;color:#9bb0c4">Coach / therapeut · Ondernemers · €3.500</div>
+      </div>
+      <button onclick="loadCoachDemo()" style="background:linear-gradient(90deg,#F5A623,#e8901a);color:#fff;border:none;border-radius:99px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">⚡ Bekijk →</button>
+    </div>
   </div>
-  <button onclick="loadCaseZero()" style="background:linear-gradient(90deg,#1E9BF0,#7C5CFC);color:#fff;border:none;border-radius:99px;padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 4px 16px rgba(30,155,240,.4)">
-    ⚡ Bekijk live resultaat →
-  </button>
 </div>
 
 <!-- STAP 0: PERSONA -->
@@ -215,18 +249,23 @@ const STAP_WIE = {
 };
 
 /* ═══════════════════════════════════════════════════
+   BRON-STAP — website / PDF / tekst → auto-invullen
+═══════════════════════════════════════════════════ */
+const STAP_BRON = { t:'Bron', T:'bron', s:'', f:[] };
+
+/* ═══════════════════════════════════════════════════
    PERSONA DEFINITIES
 ═══════════════════════════════════════════════════ */
 const PERSONAS = {
   ondernemer: {
     label:'Lokale ondernemer / MKB',
-    icon:'🏢',
+    icon:`<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#1E9BF0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
     desc:'Installateur, hovenier, aannemer, accountant, marketingbureau',
     client:'klant', clients:'klanten', lead:'aanvraag', leads:'aanvragen',
     session:'project', sessions:'projecten', prob:'probleem',
     unit:'omzet', unitLabel:'Wat levert een nieuwe klant je gemiddeld op? (€/jaar)',
     capacityLabel:'Max. nieuwe klanten per maand zonder kwaliteitsverlies',
-    steps:[
+    steps:[STAP_BRON,
       {t:'Visie',s:'Waarvoor bouw je dit? Jouw antwoorden maken de ladder betekenisvol.',f:[
         {k:'impact_klant',T:'text',l:'Welke echte verandering wil je teweegbrengen?',h:'dieper dan je dienst — in het leven van je klant',ph:'Bijv: dat ondernemers eindelijk rust voelen omdat hun marketing geregeld is',chips:['Minder stress, meer rust','Financiële zekerheid','Meer tijd voor wat telt','Zelfvertrouwen terugkrijgen']},
         {k:'impact_tijd',T:'text',l:'Hoe ziet jouw ideale week eruit als dit systeem staat?',ph:'Bijv: 3 werkdagen, 2 dagen volledig vrij voor gezin en sport',chips:['3-daagse werkweek','Geen avondwerk meer','Zelf mijn tijd indelen','Meer ruimte voor gezin']},
@@ -266,13 +305,13 @@ const PERSONAS = {
 
   therapeut: {
     label:'Therapeut / Coach',
-    icon:'🧠',
+    icon:`<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#1E9BF0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>`,
     desc:'Psycholoog, coach, fysiotherapeut, diëtist, maatschappelijk werker',
     client:'cliënt', clients:'cliënten', lead:'intake', leads:'intakes',
     session:'sessie', sessions:'sessies', prob:'klacht of vraag',
     unit:'waarde van een traject', unitLabel:'Wat is een volledig traject waard voor een cliënt? (€)',
     capacityLabel:'Max. nieuwe cliënten per maand (eerlijk — agenda is eindig)',
-    steps:[
+    steps:[STAP_BRON,
       {t:'Visie',s:'Waarvoor doe je dit werk? Jouw antwoorden maken de ladder betekenisvol.',f:[
         {k:'impact_klant',T:'text',l:'Welke echte verandering wil je teweegbrengen?',h:'dieper dan je behandeling — in het leven van je cliënt',ph:'Bijv: dat mensen weer vol energie door het leven gaan en zichzelf niet meer verliezen',chips:['Meer rust en veerkracht','Terug naar wie ze zijn','Pijnvrij leven','Zelfvertrouwen terugkrijgen']},
         {k:'impact_tijd',T:'text',l:'Hoe ziet jouw ideale week eruit als dit systeem staat?',ph:'Bijv: 3 behandeldagen, vaste uren, geen administratie in de avond',chips:['Vaste behandeluren','Geen avondwerk','Zelf mijn agenda bepalen','Ruimte voor supervisie & groei']},
@@ -314,13 +353,13 @@ const PERSONAS = {
 
   zorgpraktijk: {
     label:'Zorgpraktijk',
-    icon:'🏥',
+    icon:`<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#1E9BF0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
     desc:'Fysiotherapeut, huisarts, tandarts, opticiën, verloskundige',
     client:'patiënt', clients:'patiënten', lead:'behandelverzoek', leads:'behandelverzoeken',
     session:'behandeling', sessions:'behandelingen', prob:'klacht',
     unit:'waarde van een behandeltraject', unitLabel:'Wat is een volledig behandeltraject waard? (€)',
     capacityLabel:'Max. nieuwe patiënten per maand (eerlijk)',
-    steps:[
+    steps:[STAP_BRON,
       {t:'Visie',s:'Waarvoor doe je dit werk? Jouw antwoorden maken de ladder betekenisvol.',f:[
         {k:'impact_klant',T:'text',l:'Welke echte verandering wil je teweegbrengen?',h:'dieper dan de behandeling — in het leven van je patiënt',ph:'Bijv: dat mensen pijnvrij bewegen en hun leven weer leven, niet alleen functioneren',chips:['Pijnvrij leven','Terug op het veld','Volledig herstellen','Weer werken en genieten']},
         {k:'impact_tijd',T:'text',l:'Hoe ziet jouw ideale week eruit als dit systeem staat?',ph:'Bijv: behandeldagen dinsdag t/m donderdag, maandag en vrijdag vrij',chips:['3-daagse behandelweek','Vaste praktijkuren','Geen avondwerk','Ruimte voor bijscholing']},
@@ -362,13 +401,13 @@ const PERSONAS = {
 
   kennisondernemer: {
     label:'Kennis­ondernemer',
-    icon:'🎓',
+    icon:`<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#1E9BF0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>`,
     desc:'Trainer, spreker, auteur, online cursusmaker, consultant',
     client:'deelnemer', clients:'deelnemers', lead:'aanmelding', leads:'aanmeldingen',
     session:'training', sessions:'trainingen', prob:'uitdaging',
     unit:'waarde van je kennis voor de deelnemer', unitLabel:'Wat is jouw kennis de deelnemer waard in jaar 1? (€)',
     capacityLabel:'Max. nieuwe 1-op-1 trajecten per maand (groep is onbeperkt)',
-    steps:[
+    steps:[STAP_BRON,
       {t:'Visie',s:'Waarvoor doe je dit werk? Jouw antwoorden maken de ladder betekenisvol.',f:[
         {k:'impact_klant',T:'text',l:'Welke echte verandering wil je teweegbrengen?',h:'dieper dan de training — in het leven of werk van je deelnemer',ph:'Bijv: dat mensen hun volle potentieel inzetten en trots zijn op wat ze bouwen',chips:['Meer zelfvertrouwen','Betere resultaten','Leiderschap ontwikkelen','Vrijheid en autonomie']},
         {k:'impact_tijd',T:'text',l:'Hoe ziet jouw ideale week eruit als dit systeem staat?',ph:'Bijv: 2 live dagen, de rest online en op eigen tempo',chips:['2 live trainingsdagen','Asynchroon werken','Zelf mijn agenda bepalen','Reizen en werken']},
@@ -461,7 +500,49 @@ function loadCaseZero() {
     bewijs: '121+ ondernemers geholpen, 5.0 ★ op Google, 10+ jaar ervaring',
     moed: 'resultaat'
   };
-  // Hide banner + persona step, show dash directly
+  document.getElementById('caseZeroBanner').classList.add('hide');
+  document.getElementById('personaStep').classList.add('hide');
+  generate();
+}
+
+function loadCoachDemo(){
+  P = { key:'therapeut', ...PERSONAS.therapeut };
+  A = {
+    // Visie
+    impact_waarom: 'Omdat ik zelf weet hoe het voelt om keihard te werken en toch financieel te stranden. Ik wil ondernemers laten zien dat succes maakbaar is — als je de juiste strategie hebt.',
+    impact_klant: 'Dat mijn klanten eindelijk consistent €8.000+ per maand verdienen zonder zichzelf weg te cijferen. Meer rust, meer vrijheid, meer zelfvertrouwen.',
+    impact_tijd: '3 coachingsdagen per week, de rest voor mezelf — wandelen, lezen, aanwezig zijn voor mijn gezin.',
+    vrijheidsgetal: 7500,
+    impact_relaties: 'Meer aanwezig zijn thuis. Geen stress meer over de volgende betaling.',
+    // Wie
+    wie_karakter: 'Direct, empathisch, resultaatgericht',
+    wie_waarden: 'Eerlijkheid, groei, vrijheid',
+    wie_nooit: 'Ik geef nooit vage adviezen zonder actieplan. Geen fluff, geen feel-good zonder resultaat.',
+    wie_anders: 'Ik combineer harde bedrijfsstrategie met mindset-werk — de meeste coaches doen alleen het één of het ander.',
+    wie_stijl: 'direct',
+    // Doelgroep & pijn
+    doelgroep: 'Zelfstandige ondernemers en freelancers die 2-5 jaar actief zijn maar vastlopen op €3.000-€5.000 per maand',
+    pijn: 'Ze werken keihard maar verdienen niet wat ze waard zijn. Elk nieuw project begint bij nul — geen systeem, geen vaste inkomsten, geen rust.',
+    pijnkost: 3500,
+    betaalkracht: 'mkb',
+    kanaal: 'LinkedIn, mond-tot-mondreclame, Instagram',
+    // Aanbod
+    before: 'een business zonder structuur — maand-tot-maand overleven, altijd op zoek naar de volgende klant',
+    after: 'een winstgevend systeem met vaste klanten, heldere positionering en consistent €8.000+/maand',
+    outcome: 'consistent inkomen',
+    dagen: 90,
+    jaarwaarde: 24000,
+    dienst: 'Business coaching — positionering, aanbod, sales en mindset in één 3-maands traject',
+    levering: 'dienst',
+    capaciteit: 6,
+    verpakbaar: 'De Ondernemer Methode — online programma met video\'s, werkboeken en templates',
+    caseres: 'Van €2.800 naar €9.400/mnd in 3 maanden (Tom, marketingconsultant) en van 0 naar 12 vaste klanten in 6 weken (Lisa, VA)',
+    bewijs: '80+ ondernemers begeleid, gemiddeld 3× omzetgroei in eerste traject, 4.9 ★ op Google',
+    moed: 'resultaat',
+    // Sessie-gebaseerd
+    sessietarief: 250,
+    trajectlengte: 12
+  };
   document.getElementById('caseZeroBanner').classList.add('hide');
   document.getElementById('personaStep').classList.add('hide');
   generate();
@@ -535,9 +616,10 @@ function render() {
 
   const s = STEPS[cur];
   const c = document.getElementById('card');
+  if (s.T === 'bron') { c.innerHTML = renderBronStep(); return; }
   if (isLast) {
     let h=`<h2>Controle</h2><p class="s">Klopt dit? Dan bouwt de engine je waardeladder.</p>`;
-    STEPS.slice(0,-1).forEach(st=>st.f.forEach(f=>{
+    STEPS.slice(0,-1).filter(st=>st.T!=='bron').forEach(st=>st.f.forEach(f=>{
       let v=A[f.k];
       if(f.T==='opt'&&v){const o=f.o?.find(x=>x[0]===v);v=o?o[1]:v}
       h+=`<p style="font-size:13px;padding:4px 0"><b>${f.l}:</b> ${v?esc(v):'<i style="color:#aab6c3">leeg</i>'}</p>`;
@@ -565,6 +647,222 @@ const eur=n=>'€'+Math.round(n).toLocaleString('nl-NL');
 function cap(s){s=(s||'').trim();return s?s[0].toUpperCase()+s.slice(1):''}
 function capW(s){return(s||'').trim().split(/\s+/).map(w=>w[0].toUpperCase()+w.slice(1)).join('-')}
 function snap(t,arr){return arr.reduce((a,b)=>Math.abs(b-t)<Math.abs(a-t)?b:a)}
+
+/* ═══════════════════════════════════════════════════
+   BRON-STAP: URL / PDF / TEKST → AUTO-INVULLEN
+═══════════════════════════════════════════════════ */
+function renderBronStep(){
+  const apiKey = sessionStorage.getItem('rfr_api_key')||'';
+  return `
+  <h2>Bron invullen</h2>
+  <p class="s">Voer de website-URL, upload een PDF of plak tekst. De tool analyseert de inhoud en vult de velden alvast in — jij past ze daarna aan waar nodig.<br><br>
+  <small style="color:var(--grey)">Je hebt een <b>Anthropic API-sleutel</b> nodig om de analyse te starten (<a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>). De sleutel wordt alleen lokaal opgeslagen.</small></p>
+
+  <div class="bron-grid">
+    <div class="field">
+      <label>Website-URL <span class="hint">— bestaande website van de klant</span></label>
+      <div class="bron-row">
+        <input type="text" id="bron_url" placeholder="https://www.voorbeeldbedrijf.nl" value="${sessionStorage.getItem('rfr_bron_url')||''}">
+        <button onclick="fetchBronURL()">Ophalen</button>
+      </div>
+      <div id="url_status" class="bron-status"></div>
+    </div>
+
+    <div class="field">
+      <label>PDF uploaden <span class="hint">— folder, brochure, aanbod</span></label>
+      <input type="file" accept=".pdf" id="bron_pdf" onchange="parseBronPDF(this)">
+      <div id="pdf_status" class="bron-status"></div>
+    </div>
+
+    <div class="field">
+      <label>Losse input <span class="hint">— notities, eigen omschrijving</span></label>
+      <textarea id="bron_text" rows="5" placeholder="Plak hier tekst: wat doet het bedrijf, wie zijn de klanten, wat is het aanbod, wat kost het, wat zijn de resultaten...">${sessionStorage.getItem('rfr_bron_text')||''}</textarea>
+    </div>
+
+    <div class="field">
+      <div class="api-key-row">
+        <label>Anthropic API-sleutel:</label>
+        <input type="password" id="bron_apikey" placeholder="sk-ant-..." value="${apiKey}" oninput="sessionStorage.setItem('rfr_api_key',this.value)">
+      </div>
+    </div>
+  </div>
+
+  <button class="bron-analyze" id="analyzeBtn" onclick="analyzeContent()">
+    ✦ Analyseer &amp; vul velden in
+  </button>
+  <div id="analyze_status" class="bron-status" style="margin-top:10px"></div>
+
+  <p style="font-size:12px;color:var(--grey);margin-top:14px;text-align:center">
+    Geen bron? Klik op "Volgende →" en vul de velden handmatig in.
+  </p>`;
+}
+
+let bronText = '';
+
+function stripHTML(html){
+  return html
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi,'')
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi,'')
+    .replace(/<[^>]+>/g,' ')
+    .replace(/\s+/g,' ').trim().slice(0,6000);
+}
+
+async function fetchBronURL(){
+  const url = document.getElementById('bron_url').value.trim();
+  if(!url){return;}
+  sessionStorage.setItem('rfr_bron_url', url);
+  const st = document.getElementById('url_status');
+  st.className='bron-status loading'; st.textContent='Bezig met ophalen…';
+
+  const proxies = [
+    u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
+    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+    u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`
+  ];
+
+  for(const makeProxy of proxies){
+    try {
+      const res = await fetch(makeProxy(url), {signal: AbortSignal.timeout(9000)});
+      if(!res.ok) continue;
+      const ct = res.headers.get('content-type')||'';
+      let html = ct.includes('json') ? (await res.json()).contents : await res.text();
+      if(!html || html.length < 100) continue;
+      const text = stripHTML(html);
+      if(text.length < 80) continue;
+      bronText += '\n\n[WEBSITE: '+url+']\n'+text;
+      st.className='bron-status ok';
+      st.textContent='✓ '+text.length+' tekens opgehaald.';
+      return;
+    } catch(e){ /* try next proxy */ }
+  }
+
+  // All proxies failed — show manual paste option
+  st.className='bron-status err';
+  st.innerHTML=`CORS blokkeert automatisch ophalen (dit is normaal voor de meeste sites).<br><br>
+    <b>Alternatief in 3 stappen:</b><br>
+    1. <a href="${url}" target="_blank" style="color:var(--blue)">Open de website</a><br>
+    2. Selecteer alles op de pagina (Ctrl+A / Cmd+A)<br>
+    3. Kopieer (Ctrl+C) en plak in "Losse input" hieronder`;
+}
+
+async function parseBronPDF(input){
+  const file = input.files[0]; if(!file) return;
+  const st = document.getElementById('pdf_status');
+  st.className='bron-status loading'; st.textContent='PDF lezen…';
+  try {
+    if(typeof pdfjsLib==='undefined') throw new Error('PDF.js niet geladen');
+    pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    const ab = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({data:ab}).promise;
+    let text = '';
+    for(let i=1;i<=Math.min(pdf.numPages,12);i++){
+      const page = await pdf.getPage(i);
+      const tc = await page.getTextContent();
+      text += tc.items.map(x=>x.str).join(' ')+'\n';
+    }
+    text = text.trim().slice(0,6000);
+    bronText += '\n\n[PDF: '+file.name+']\n'+text;
+    st.className='bron-status ok'; st.textContent='✓ '+text.length+' tekens gelezen uit PDF ('+pdf.numPages+' pagina\'s).';
+  } catch(e) {
+    st.className='bron-status err'; st.textContent='PDF lezen mislukt: '+e.message;
+  }
+}
+
+async function analyzeContent(){
+  const apiKey = document.getElementById('bron_apikey').value.trim();
+  const manualText = document.getElementById('bron_text').value.trim();
+  sessionStorage.setItem('rfr_bron_text', manualText);
+  if(manualText) bronText += '\n\n[LOSSE INPUT]\n'+manualText;
+
+  if(!apiKey){
+    const st=document.getElementById('analyze_status');
+    st.className='bron-status err'; st.textContent='Vul eerst je Anthropic API-sleutel in.';
+    return;
+  }
+  if(!bronText.trim()){
+    const st=document.getElementById('analyze_status');
+    st.className='bron-status err'; st.textContent='Voeg eerst een URL, PDF of tekst toe.';
+    return;
+  }
+
+  const btn=document.getElementById('analyzeBtn');
+  btn.disabled=true; btn.textContent='Bezig met analyseren…';
+  const st=document.getElementById('analyze_status');
+  st.className='bron-status loading'; st.textContent='Claude analyseert de inhoud…';
+
+  const prompt = `Je bent een business-strateeg die een waardeladder opstelt voor een ondernemer.
+Analyseer de tekst hieronder en retourneer ALLEEN een geldig JSON-object (geen uitleg, geen markdown).
+
+Vul zoveel mogelijk velden in op basis van de tekst. Laat een veld leeg ("") als er geen duidelijke informatie over is.
+
+JSON-structuur (gebruik exact deze keys):
+{
+  "doelgroep": "wie zijn de klanten (1-2 zinnen)",
+  "dienst": "wat doet het bedrijf / wat is het aanbod",
+  "pijn": "het hoofdprobleem van de klant (in klant-taal)",
+  "pijnkost": 0,
+  "before": "situatie vóór de dienst",
+  "after": "situatie ná de dienst",
+  "outcome": "het concrete eindresultaat in 2-4 woorden",
+  "dagen": 0,
+  "jaarwaarde": 0,
+  "bewijs": "social proof, reviews, aantallen",
+  "caseres": "specifiek resultaat van een klant",
+  "impact_klant": "welke echte verandering brengt het bedrijf teweeg",
+  "impact_waarom": "waarom doet de eigenaar dit werk",
+  "wie_karakter": "karakter van de eigenaar in 3 woorden (als zichtbaar)",
+  "wie_waarden": "kernwaarden",
+  "wie_nooit": "wat het bedrijf nooit doet",
+  "wie_anders": "wat onderscheidt dit bedrijf"
+}
+
+TEKST:
+${bronText.slice(0,8000)}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body: JSON.stringify({
+        model:'claude-haiku-4-5-20251001',
+        max_tokens:1500,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    if(!res.ok){
+      const err=await res.json();
+      throw new Error(err.error?.message||'API fout '+res.status);
+    }
+    const data = await res.json();
+    const raw = data.content[0].text.trim();
+    const jsonStr = raw.replace(/^```json?\n?/,'').replace(/```$/,'').trim();
+    const extracted = JSON.parse(jsonStr);
+    autoFillFields(extracted);
+    st.className='bron-status ok';
+    const filled=Object.values(extracted).filter(v=>v&&v!==0).length;
+    st.textContent=`✓ ${filled} velden automatisch ingevuld. Controleer en pas aan in de volgende stappen.`;
+    btn.textContent='✓ Opnieuw analyseren';
+  } catch(e) {
+    st.className='bron-status err';
+    st.textContent='Analysefout: '+e.message;
+    btn.textContent='✦ Analyseer & vul velden in';
+  }
+  btn.disabled=false;
+}
+
+function autoFillFields(data){
+  Object.entries(data).forEach(([k,v])=>{
+    if(v!==''&&v!==0&&v!=null) A[k]=v;
+  });
+  save();
+  // Highlight prefilled inputs after navigating to those steps
+  sessionStorage.setItem('rfr_prefilled', JSON.stringify(Object.keys(data).filter(k=>data[k]&&data[k]!==0)));
+}
 
 function computeJW() {
   // For zorgpraktijk and therapeut: derive jaarwaarde from sessietarief × trajectlengte × 3 trajekten/jaar if not set
@@ -726,121 +1024,44 @@ function generate() {
   renderDash();
 }
 
-/* ═══════════════════════════════════════════════════
-   DASHBOARD
-═══════════════════════════════════════════════════ */
+/* DASHBOARD */
 function renderDash(){
   document.getElementById('wiz').classList.add('hide');
   document.getElementById('detail').classList.add('hide');
   const d=document.getElementById('dash'); d.classList.remove('hide');
   const e=L.eco;
-  const isCaseZero = A.caseres && A.caseres.includes('Gezond Vrouw Zijn');
-  const vg = A.vrijheidsgetal || 0;
-  const coreClientsNeeded = vg ? Math.ceil(vg / e.cont) : null;
-
-  let h=`<div class="dash-header">
-    <div>
-      ${isCaseZero ? '<div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--blue-d);text-transform:uppercase;margin-bottom:4px">✦ Case Zero — Live Demo</div>' : ''}
-      <h2>${P.icon} ${isCaseZero ? 'Refreshed OS — Jacco\'s waardeladder' : 'Jouw waardeladder — '+P.label}</h2>
-    </div>
-    <div>
-      <button class="btn-sm" onclick="backToWizard()">← Aanpassen</button>
-      <button class="btn-sm" onclick="exportJSON()" style="margin-left:8px">↓ JSON</button>
-    </div>
-  </div>`;
-
-  // VISIE + WIE BLOK
-  if (A.impact_waarom || A.impact_klant || A.wie_karakter) {
-    const stijlLabel = {eerlijk:'Eerlijk & direct',warm:'Warm & persoonlijk',zakelijk:'Zakelijk & resultaatgericht',inspirerend:'Inspirerend & visionair'}[A.wie_stijl] || '';
-    h += `<div style="background:linear-gradient(135deg,#12202F,#1a3a5c);border-radius:16px;padding:26px 30px;margin-bottom:18px;color:#fff">
-      ${A.impact_waarom ? `<div style="border-left:4px solid var(--blue);padding-left:16px;margin-bottom:20px">
-        <div style="font-size:11px;font-weight:700;color:#9fcdf3;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px">Waarom</div>
-        <div style="font-size:17px;color:#fff;font-style:italic;line-height:1.55">"${A.impact_waarom}"</div>
-      </div>` : ''}
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:${(A.wie_karakter||A.wie_waarden||A.wie_nooit)?'20px':'0'}">
-        ${A.impact_klant ? `<div><div style="font-size:10px;font-weight:700;color:#9fcdf3;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Impact op klant</div><div style="font-size:13.5px;color:#d4e8f5;line-height:1.5">${A.impact_klant}</div></div>` : ''}
-        ${A.impact_tijd ? `<div><div style="font-size:10px;font-weight:700;color:#9fcdf3;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Jouw ideale week</div><div style="font-size:13.5px;color:#d4e8f5;line-height:1.5">${A.impact_tijd}</div></div>` : ''}
-        ${A.impact_relaties ? `<div><div style="font-size:10px;font-weight:700;color:#9fcdf3;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Ruimte voor</div><div style="font-size:13.5px;color:#d4e8f5;line-height:1.5">${A.impact_relaties}</div></div>` : ''}
-        ${vg ? `<div style="background:rgba(255,255,255,.09);border-radius:10px;padding:12px 14px">
-          <div style="font-size:10px;font-weight:700;color:#9fcdf3;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Vrijheidsgetal</div>
-          <div style="font-size:26px;font-weight:900;color:#fff">${eur(vg)}<span style="font-size:12px;font-weight:400;color:#9fcdf3">/mnd</span></div>
-          ${coreClientsNeeded ? `<div style="font-size:11.5px;color:#9bb0c4;margin-top:3px">= ${coreClientsNeeded} vaste ${P.clients} in continuity</div>` : ''}
-        </div>` : ''}
-      </div>
-      ${(A.wie_karakter||A.wie_waarden||A.wie_nooit||A.wie_anders) ? `
-      <div style="border-top:1px solid rgba(255,255,255,.1);padding-top:18px">
-        <div style="font-size:10px;font-weight:700;color:#9fcdf3;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px">Wie jij bent</div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px">
-          ${A.wie_karakter ? `<div><div style="font-size:10px;font-weight:700;color:#9fcdf3;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Karakter</div><div style="font-size:13.5px;color:#d4e8f5">${A.wie_karakter}</div></div>` : ''}
-          ${A.wie_waarden ? `<div><div style="font-size:10px;font-weight:700;color:#9fcdf3;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Kernwaarden</div><div style="font-size:13.5px;color:#d4e8f5">${A.wie_waarden}</div></div>` : ''}
-          ${A.wie_nooit ? `<div><div style="font-size:10px;font-weight:700;color:#9fcdf3;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Wat ik nooit doe</div><div style="font-size:13.5px;color:#d4e8f5">${A.wie_nooit}</div></div>` : ''}
-          ${A.wie_anders ? `<div><div style="font-size:10px;font-weight:700;color:#9fcdf3;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Wat mij onderscheidt</div><div style="font-size:13.5px;color:#d4e8f5">${A.wie_anders}</div></div>` : ''}
-          ${stijlLabel ? `<div><div style="font-size:10px;font-weight:700;color:#9fcdf3;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Stijl</div><div style="font-size:13.5px;color:#d4e8f5">${stijlLabel}</div></div>` : ''}
-        </div>
-      </div>` : ''}
-    </div>`;}
-
-  h+=`<div class="ladder">${L.tiers.map((t,i)=>`
-    <div class="tier" onclick="renderDet(${i})">
-      <div class="tlvl">${t.golden.lvl.split('—')[0].trim()}</div>
-      <div class="tgold">✦ ${t.golden.lvl.split('—')[1]?.trim()||''}</div>
-      <h3>${t.naam}</h3>
-      <div class="tpr">${t.prijs}</div>
-      <p>${t.belofte.replace(/"/g,'').substring(0,90)}…</p>
-    </div>`).join('')}</div>`;
-
-  h+=`<div class="eco">
-    <h3>Economics + Simulator</h3>
-    <div class="nums">
-      <div class="n"><b>${eur(e.ltv)}</b><span>LTV (core + 24 mnd)</span></div>
-      <div class="n"><b>${eur(e.maxcac)}</b><span>max. CAC bij 3:1</span></div>
-      <div class="n"><b>Dag 1</b><span>payback (aanbetaling)</span></div>
-      <div class="n"><b>${e.capm}/${P.clients.charAt(0)}nd</b><span>capaciteit = schaarste</span></div>
-    </div>
-    <div class="sim">
-      <label>Simulator: <b id="lw">10</b> ${P.leads} per week</label>
-      <input type="range" min="2" max="50" value="10" oninput="sim(this.value)">
-      <div class="out" id="simout"></div>
-    </div>
-  </div>`;
-
-  h+=`<div class="checks"><h3>Systeem-checks</h3>${L.checks.map(c=>`<div class="ck ${c[0]?'ok':'warn'}"><i>${c[0]?'✓':'!'}</i><span>${c[1]}${c[2]?' — <b>'+c[2]+'</b>':''}</span></div>`).join('')}</div>`;
+  const isCaseZero=A.caseres&&A.caseres.includes('Gezond Vrouw Zijn');
+  const vg=A.vrijheidsgetal||0;
+  const coreClientsNeeded=vg?Math.ceil(vg/e.cont):null;
+  let h=`<div class="dash-header"><div>${isCaseZero?'<div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--blue-d);text-transform:uppercase;margin-bottom:4px">Case Zero - Live Demo</div>':''}<h2>${isCaseZero?'Refreshed OS — Jacco\'s waardeladder':'Jouw waardeladder — '+P.label}</h2></div><div><button class="btn-sm" onclick="backToWizard()">← Aanpassen</button><button class="btn-sm" onclick="exportJSON()" style="margin-left:8px">↓ JSON</button></div></div>`;
+  if(A.impact_waarom||A.impact_klant||A.wie_karakter){
+    h+=`<div style="background:linear-gradient(135deg,#12202F,#1a3a5c);border-radius:16px;padding:26px 30px;margin-bottom:18px;color:#fff">${A.impact_waarom?`<div style="border-left:4px solid var(--blue);padding-left:16px;margin-bottom:20px"><div style="font-size:11px;font-weight:700;color:#9fcdf3;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px">Waarom</div><div style="font-size:17px;color:#fff;font-style:italic;line-height:1.55">"${A.impact_waarom}"</div></div>`:''}<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px">${A.impact_klant?`<div><div style="font-size:10px;font-weight:700;color:#9fcdf3;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Impact op klant</div><div style="font-size:13.5px;color:#d4e8f5">${A.impact_klant}</div></div>`:''} ${vg?`<div style="background:rgba(255,255,255,.09);border-radius:10px;padding:12px 14px"><div style="font-size:10px;font-weight:700;color:#9fcdf3;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Vrijheidsgetal</div><div style="font-size:26px;font-weight:900;color:#fff">${eur(vg)}<span style="font-size:12px;font-weight:400;color:#9fcdf3">/mnd</span></div>${coreClientsNeeded?`<div style="font-size:11.5px;color:#9bb0c4;margin-top:3px">= ${coreClientsNeeded} vaste ${P.clients} in continuity</div>`:''}</div>`:''}</div>${A.wie_karakter||A.wie_waarden?`<div style="border-top:1px solid rgba(255,255,255,.1);padding-top:18px;margin-top:18px"><div style="font-size:10px;font-weight:700;color:#9fcdf3;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px">Wie jij bent</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px">${A.wie_karakter?`<div><div style="font-size:10px;font-weight:700;color:#9fcdf3;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Karakter</div><div style="font-size:13.5px;color:#d4e8f5">${A.wie_karakter}</div></div>`:''} ${A.wie_waarden?`<div><div style="font-size:10px;font-weight:700;color:#9fcdf3;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Kernwaarden</div><div style="font-size:13.5px;color:#d4e8f5">${A.wie_waarden}</div></div>`:''} ${A.wie_anders?`<div><div style="font-size:10px;font-weight:700;color:#9fcdf3;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Wat mij onderscheidt</div><div style="font-size:13.5px;color:#d4e8f5">${A.wie_anders}</div></div>`:''}</div></div>`:''}</div>`;}
+  h+=`<div class="ladder">${L.tiers.map((t,i)=>`<div class="tier" onclick="renderDet(${i})"><div class="tlvl">${t.golden.lvl.split('—')[0].trim()}</div><div class="tgold">✦ ${t.golden.lvl.split('—')[1]?.trim()||''}</div><h3>${t.naam}</h3><div class="tpr">${t.prijs}</div><p>${t.belofte.replace(/"/g,'').substring(0,90)}…</p></div>`).join('')}</div>`;
+  h+=`<div class="eco"><h3>Economics + Simulator</h3><div class="nums"><div class="n"><b>${eur(e.ltv)}</b><span>LTV (core + 24 mnd)</span></div><div class="n"><b>${eur(e.maxcac)}</b><span>max. CAC bij 3:1</span></div><div class="n"><b>Dag 1</b><span>payback (aanbetaling)</span></div><div class="n"><b>${e.capm}/${P.clients.charAt(0)}nd</b><span>capaciteit = schaarste</span></div></div><div class="sim"><label>${P.leads} per week: <b id="lw">10</b></label><input type="range" min="2" max="50" value="10" oninput="sim(this.value)"><div class="out" id="simout"></div></div></div>`;
+  const iconOk=`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#39B36B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>`;
+  const iconWarn=`<svg width=="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F0A13A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+  h+=`<div class="checks"><h3>Systeem-checks</h3>${L.checks.map(c=>`<div class="ck ${c[0]?'ok':'warn'}"><i>${c[0]?iconOk:iconWarn}</i><span>${c[1]}${c[2]?' — <b>'+c[2]+'</b>':''}</span></div>`).join('')}</div>`;
   h+=`<p style="text-align:center;color:var(--grey);font-size:13px;margin-top:12px">Klik op een trede voor de volledige offer-sheet.</p>`;
   d.innerHTML=h; sim(10); scrollTo({top:0,behavior:'smooth'});
 }
 
 function sim(v){
   const lw=parseInt(v); document.getElementById('lw').textContent=lw;
-  const pm=lw*4.33, twb=pm*0.25, cl=Math.min(twb*0.2,L.eco.capm), cap=twb*0.2>L.eco.capm;
-  const once=cl*L.eco.core+twb*L.eco.tw, mrr=cl*L.eco.cont;
-  document.getElementById('simout').innerHTML=
-    `±${Math.round(pm)} ${P.leads}/mnd → <b>${Math.round(twb)}</b> eerste-stap-kopers → <b>${cl.toFixed(1)}</b> core-${P.clients}/mnd${cap?' <b>(gemaximeerd!)</b>':''}<br>≈ <b>${eur(once)}</b> eenmalig + <b>${eur(mrr)}</b>/mnd MRR (jaar 1: ${eur(mrr*12)}/mnd doorlopend)`;
+  const pm=lw*4.33,twb=pm*0.25,cl=Math.min(twb*0.2,L.eco.capm),cap=twb*0.2>L.eco.capm;
+  const once=cl*L.eco.core+twb*L.eco.tw,mrr=cl*L.eco.cont;
+  document.getElementById('simout').innerHTML=`+/-${Math.round(pm)} ${P.leads}/mnd → <b>${Math.round(twb)}</b> eerste-stap-kopers → <b>${cl.toFixed(1)}</b> core-${P.clients}/mnd${cap?' <b>(gemaximeerd!)</b>':''}<br>= <b>${eur(once)}</b> eenmalig + <b>${eur(mrr)}</b>/mnd MRR`;
 }
 
-/* ═══════════════════════════════════════════════════
-   OFFER DETAIL
-═══════════════════════════════════════════════════ */
 function renderDet(i){
   const t=L.tiers[i];
   document.getElementById('dash').classList.add('hide');
   const d=document.getElementById('detail'); d.classList.remove('hide');
-  let h=`<div class="det">
-    <button class="btn prev" onclick="renderDash()" style="margin-bottom:16px">← Ladder</button>
-    <div class="dlvl">Trede ${i+1} — ${t.golden.lvl.split('—')[0].trim()}</div>
-    <div class="dgold">✦ ${t.golden.lvl.split('—')[1]?.trim()||''}</div>
-    <h2>${t.naam}</h2>
-    <div class="belofte">${t.belofte}</div>
-    <div class="sun-tip"><strong>⚡ Leverage-tip</strong>${t.sunTip}</div>`;
-  h+=`<h4>Naamalternatieven</h4><div class="pillrow"><span class="pill">${t.naam} ✓</span>${t.alt.map(a=>`<span class="pill">${a}</span>`).join('')}</div>`;
-  if(t.stack){
-    h+=`<h4>Value stack (totaalwaarde ≥ 3× prijs)</h4>
-    <table class="stack">${t.stack.map(r=>`<tr><td>${r[0]}</td><td>${r[1]?eur(r[1]):'onbetaalbaar'}</td></tr>`).join('')}
-    <tr class="tot"><td>TOTALE WAARDE → PRIJS</td><td>${eur(t.stackTot)} → ${t.prijs}</td></tr></table>
-    <h4>Garantie</h4><div class="script">${t.gar}</div>`;
-  }
+  let h=`<div class="det"><button class="btn prev" onclick="renderDash()" style="margin-bottom:16px">← Ladder</button><div class="dlvl">Trede ${i+1}</div><h2>${t.naam}</h2><div class="belofte">${t.belofte}</div><div class="sun-tip"><strong>Leverage-tip</strong>${t.sunTip}</div>`;
+  h+=`<h4>Naamalternatieven</h4><div class="pillrow"><span class="pill">${t.naam} (huidig)</span>${t.alt.map(a=>`<span class="pill">${a}</span>`).join('')}</div>`;
+  if(t.stack){h+=`<h4>Value stack</h4><table class="stack">${t.stack.map(r=>`<tr><td>${r[0]}</td><td>${r[1]?eur(r[1]):'onbetaalbaar'}</td></tr>`).join('')}<tr class="tot"><td>TOTALE WAARDE</td><td>${eur(t.stackTot)} → ${t.prijs}</td></tr></table><h4>Garantie</h4><div class="script">${t.gar}</div>`;}
   h+=`<h4>Waarom deze trede werkt</h4><ul>${t.items.map(x=>`<li>${x}</li>`).join('')}</ul>`;
   if(t.mails?.length){h+=`<h4>E-mail workflow</h4>${t.mails.map(m=>`<div class="mail"><b>${m[0]}</b><span>${m[1]}</span></div>`).join('')}`}
-  if(t.script){h+=`<h4>Sales-script (tekenmoment)</h4><div class="script">${t.script}</div>`}
+  if(t.script){h+=`<h4>Sales-script</h4><div class="script">${t.script}</div>`}
   h+=`<h4>Doorstroom</h4><p>${t.door}</p></div>`;
   d.innerHTML=h; scrollTo({top:0,behavior:'smooth'});
 }
@@ -848,12 +1069,10 @@ function renderDet(i){
 function backToWizard(){
   document.getElementById('dash').classList.add('hide');
   document.getElementById('detail').classList.add('hide');
-  if (!document.getElementById('steps').children.length) {
+  if(!document.getElementById('steps').children.length){
     document.getElementById('caseZeroBanner').classList.remove('hide');
     document.getElementById('personaStep').classList.remove('hide');
-  } else {
-    document.getElementById('wiz').classList.remove('hide');
-  }
+  } else { document.getElementById('wiz').classList.remove('hide'); }
 }
 
 function exportJSON(){
